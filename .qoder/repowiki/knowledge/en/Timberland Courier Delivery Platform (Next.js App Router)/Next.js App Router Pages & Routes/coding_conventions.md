@@ -1,0 +1,4 @@
+- Route segments are implemented as default-exported async server components that fetch data directly (e.g. `listServiceLevels`, `auth()`) rather than through client-side hooks.
+- Authenticated sub-routes guard access in their `layout.tsx` by calling `auth()` and using `redirect('/login')` before rendering children.
+- Public-facing page content is composed of reusable shadcn-style UI primitives (`Card`, `CardContent`, `CardHeader`, `Button`) imported from `@/components/ui/*`.
+- Icons are imported from `lucide-react` and rendered inline inside JSX props or elements rather than wrapped in custom icon components.

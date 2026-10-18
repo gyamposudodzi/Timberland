@@ -1,0 +1,94 @@
+# 知识卡导出索引文件
+schema_version: 1
+locale: en-US
+branch: main
+nodes_managed: true
+exported_at: "2026-10-18T18:58:23Z"
+modules:
+    "":
+        dir_name: Timberland Courier Delivery Platform (Next.js App Router)
+        title: Timberland Courier Delivery Platform (Next.js App Router)
+        scope:
+            - README.md
+            - AGENTS.md
+            - .gitignore
+            - package.json
+            - package-lock.json
+            - tsconfig.json
+            - next.config.ts
+            - eslint.config.mjs
+            - vitest.config.ts
+            - playwright.config.ts
+            - middleware.ts
+            - .env.example
+            - docker-compose.yml
+        source_files: []
+        children:
+            - app_routes
+            - components
+            - lib
+            - prisma_schema
+            - server_actions
+            - tests
+        depends_on: []
+        related_to: []
+    app_routes:
+        dir_name: Next.js App Router Pages & Routes
+        title: Next.js App Router Pages & Routes
+        scope:
+            - app/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: server_actions
+            - path: tests
+    components:
+        dir_name: Domain Feature Components & Shared UI Primitives
+        title: Domain Feature Components & Shared UI Primitives
+        scope:
+            - components/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    lib:
+        dir_name: lib
+        title: lib
+        scope:
+            - lib/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    prisma_schema:
+        dir_name: Timberland Delivery Platform Prisma Data Schema
+        title: Timberland Delivery Platform Prisma Data Schema
+        scope:
+            - prisma/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: tests
+    server_actions:
+        dir_name: Next.js Server Actions & Read Services
+        title: Next.js Server Actions & Read Services
+        scope:
+            - server/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: app_routes
+    tests:
+        dir_name: Unit & E2E Test Suite
+        title: Unit & E2E Test Suite
+        scope:
+            - tests/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: app_routes
+            - path: prisma_schema

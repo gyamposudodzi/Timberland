@@ -1,0 +1,1 @@
+Vitest unit tests for pricing, shipment state machine and tracking-number utilities, plus Playwright end-to-end tests covering authentication, shipping and tracking flows.

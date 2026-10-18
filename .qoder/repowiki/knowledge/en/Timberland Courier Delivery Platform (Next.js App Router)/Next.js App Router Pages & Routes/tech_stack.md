@@ -1,0 +1,1 @@
+Next.js App Router with React Server Components (pages are async functions), NextAuth v5 handler routing, Tailwind CSS classes, Lucide icons, and Google Fonts (Geist Sans + Geist Mono).

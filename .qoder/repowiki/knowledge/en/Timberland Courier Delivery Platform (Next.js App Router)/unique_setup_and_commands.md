@@ -1,0 +1,1 @@
+`npm run db:migrate` boots Prisma migrations against the local Postgres container from `docker-compose.yml`; `npm run db:seed` runs `tsx prisma/seed.ts`; `npm run test:e2e:ui` opens the Playwright UI; `npm run typecheck` runs `tsc --noEmit` across the whole tree.

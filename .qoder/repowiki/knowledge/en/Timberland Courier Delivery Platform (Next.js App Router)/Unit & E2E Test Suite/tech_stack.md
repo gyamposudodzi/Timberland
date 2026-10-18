@@ -1,0 +1,1 @@
+Vitest for unit tests, Playwright for browser-based E2E tests, Prisma Client used inside Playwright's Node context to query the seeded database.

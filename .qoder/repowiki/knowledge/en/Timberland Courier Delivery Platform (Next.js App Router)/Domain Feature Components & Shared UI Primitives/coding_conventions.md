@@ -1,0 +1,6 @@
+- UI primitives in `ui/` expose typed React components (often via `forwardRef`) and export both the component and its underlying `cva` variants for reuse.
+- Styling is done exclusively with Tailwind utility classes combined through the shared `cn` helper from `@/lib/utils` rather than inline style objects or CSS modules.
+- Client-side forms wrap their submit handlers in `useTransition` and drive a `pending` flag to disable buttons and show a `<Spinner>` during server action execution.
+- Form fields are composed by nesting an `Input`/`Select`/`Textarea` inside a `Field` wrapper that renders label, required asterisk, hint, and error text consistently.
+- Server components import session data via `@/lib/auth` (e.g. `auth()`) and render conditional UI based on whether a user is signed in.
+- Feature components declare `'use client'` at the top of the file when they need hooks like `useState`/`useTransition`, while layout/server components remain implicit server components.

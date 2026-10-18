@@ -1,0 +1,1 @@
+Next.js Server Actions (`"use server"`), Prisma Client for all DB access, Zod schemas from `@/lib/validation` for input validation, and NextAuth-style `signIn`/`signOut` from `@/lib/auth`.

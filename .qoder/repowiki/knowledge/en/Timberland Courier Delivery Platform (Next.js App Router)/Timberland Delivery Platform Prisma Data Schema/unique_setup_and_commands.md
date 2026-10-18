@@ -1,0 +1,1 @@
+Database connection is read from the `DATABASE_URL` environment variable. Seed data is populated by running the Prisma seed entrypoint defined in `seed.ts` after migrations have been applied.

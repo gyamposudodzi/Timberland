@@ -1,0 +1,1 @@
+Monorepo root wiring a Next.js 16 app that serves the Timberland courier delivery platform, integrating Prisma/Postgres, NextAuth, Tailwind v4/Turbopack, and Vitest/Playwright tests.

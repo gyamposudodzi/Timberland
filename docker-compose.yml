@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: timberland-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: timberland
+      POSTGRES_PASSWORD: timberland
+      POSTGRES_DB: timberland
+    ports:
+      - "5432:5432"
+    volumes:
+      - timberland_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U timberland -d timberland"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  timberland_pgdata:
