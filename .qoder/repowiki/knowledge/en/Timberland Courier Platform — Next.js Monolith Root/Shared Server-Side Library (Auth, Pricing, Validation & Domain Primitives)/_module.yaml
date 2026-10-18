@@ -1,8 +1,0 @@
-schema_version: 1
-module_path: lib
-title: Shared Server-Side Library (Auth, Pricing, Validation & Domain Primitives)
-scope:
-    - lib/
-source_files: []
-depends_on: []
-related_to: []

@@ -75,8 +75,11 @@ export async function addTrackingEventAction(
     return created;
   });
 
-  // Fire-and-forget the customer notification (logs failures silently).
-  notifyStatusChange({ shipmentId, eventId: event.id }).catch(() => {});
+  // Notify the customer only for meaningful updates: a status change or a
+  // public event. Internal, same-status notes stay silent.
+  if (isStatusChange || isPublic) {
+    notifyStatusChange({ shipmentId, eventId: event.id }).catch(() => {});
+  }
 
   revalidatePath(`/ops/shipments/${shipmentId}`);
   revalidatePath(`/account/shipments/${shipmentId}`);

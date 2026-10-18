@@ -1,5 +1,0 @@
-- Route segments are default-exported async server components that call data-fetching functions directly (e.g. `listServiceLevels`, `auth()`, `getTrackedShipment`) rather than delegating to client-side hooks.
-- Authenticated sub-routes guard access in their `layout.tsx` by awaiting `auth()` and using `redirect('/login')` before rendering children.
-- Public-facing page content is composed of reusable shadcn-style UI primitives (`Card`, `CardContent`, `CardHeader`, `Button`, `Alert`) imported from `@/components/ui/*`.
-- Icons are imported from `lucide-react` and rendered inline inside JSX elements or props instead of being wrapped in custom icon components.
-- Guest-accessible dynamic routes apply per-IP rate limiting via `rateLimit()` against `x-forwarded-for` before performing any downstream lookup.

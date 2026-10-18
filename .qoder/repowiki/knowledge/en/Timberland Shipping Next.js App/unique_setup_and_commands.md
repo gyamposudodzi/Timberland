@@ -1,0 +1,1 @@
+`npm run db:migrate` boots the local DB via Prisma dev migrations; `npm run db:seed` runs `prisma/seed.ts`; `npm test` runs Vitest; `npm run test:e2e` runs Playwright against a running Next dev server.

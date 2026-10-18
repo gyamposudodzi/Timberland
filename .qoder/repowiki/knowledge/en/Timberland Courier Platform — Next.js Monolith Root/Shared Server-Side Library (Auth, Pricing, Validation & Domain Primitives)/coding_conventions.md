@@ -1,6 +1,0 @@
-- Modules that touch Node-only APIs (`process.env`, `crypto`, `nodemailer`, `bcrypt`) begin with `import "server-only"` to prevent accidental client-side bundling.
-- Environment variables are accessed exclusively through the typed `env` object in `lib/env.ts` rather than direct `process.env` reads, with required vars throwing on missing values.
-- Domain enums are modeled as `as const` string arrays paired with a derived TypeScript type (e.g. `SHIPMENT_STATUSES` / `ShipmentStatus`, `ZONE_CODES` / `ZoneCode`) plus helper predicates.
-- Business calculations are kept as pure functions taking plain numbers and returning structured breakdowns (see `pricing.computeQuote`), with callers responsible for converting Prisma `Decimal` fields via `Number(...)`.
-- Input validation is centralized as Zod schemas in `lib/validation.ts`, which also export the corresponding `z.infer` TypeScript types for server-action payloads.
-- Optional external integrations (Google OAuth, SMTP email) are gated behind boolean flags (`googleEnabled`, `emailEnabled`) derived from env, allowing the app to run fully without them.

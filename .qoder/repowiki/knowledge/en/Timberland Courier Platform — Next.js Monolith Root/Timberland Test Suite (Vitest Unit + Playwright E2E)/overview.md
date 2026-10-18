@@ -1,1 +1,0 @@
-Test suite for Timberland's pricing, shipment state machine and tracking-number utilities via Vitest, plus browser-based Playwright E2E tests covering authentication, shipping and tracking flows.

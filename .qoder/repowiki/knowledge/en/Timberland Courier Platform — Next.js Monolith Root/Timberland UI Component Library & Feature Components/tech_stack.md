@@ -1,1 +1,0 @@
-Next.js App Router components (client + server), Tailwind CSS with class-variance-authority for variant props, lucide-react icons, and Next.js Server Actions for form submissions.

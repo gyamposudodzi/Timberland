@@ -1,3 +1,0 @@
-- Unit tests wrap each module's behavior in a single `describe` block, with one `it` per behavioral property of the imported function.
-- E2E specs share reusable page actions through exported helpers (e.g. `loginAs`, `findDeliveredShipment`) rather than duplicating selectors or database queries inline.
-- Database access in e2e helpers uses a process-scoped cached PrismaClient singleton with an explicit `closePrisma` teardown helper to `$disconnect` on cleanup.

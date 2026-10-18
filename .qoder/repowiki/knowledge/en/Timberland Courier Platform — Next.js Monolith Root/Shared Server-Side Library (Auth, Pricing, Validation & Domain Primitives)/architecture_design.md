@@ -1,9 +1,0 @@
-Flat collection of single-responsibility modules under `lib/` consumed by routes, server actions, and middleware. Internal layering:
-- Infrastructure: `db.ts` exports a singleton `PrismaClient` reused across hot-reloads; `env.ts` is the single typed entry point to `process.env`, guarded with `import "server-only"`.
-- Auth: `auth.config.ts` holds edge-safe NextAuth config (JWT strategy, `authorized`/`jwt`/`session` callbacks) that avoids Node-only imports so it can be loaded from `middleware.ts`; `auth.ts` merges in providers (Credentials + optional Google) at runtime.
-- Security: `crypto.ts` wraps bcrypt hashing/verification and SHA-256 token hashing; `rate-limit.ts` provides an in-memory fixed-window limiter designed to be swappable for Redis/Upstash.
-- Domain primitives: `shipment-status.ts` defines the state machine (`FORWARD` transitions, terminal/completed helpers); `tracking-number.ts` generates Crockford Base32 codes with a check character; `zones.ts` maps postal-code prefixes to zone codes.
-- Business logic: `pricing.ts` is a pure, testable quote calculator (`computeQuote`) with no framework/db deps; `rating.ts` composes it with DB lookups via Prisma to produce `PricedQuote`.
-- I/O: `notifications.ts` sends transactional emails via nodemailer with a JSON transport fallback when SMTP is unconfigured, logging every attempt to `notificationLog`.
-- Contracts: `validation.ts` centralizes all Zod schemas used by server actions/pages and re-exports inferred TS types.
-Dependency direction is one-way: higher layers (`rating`, `notifications`) depend on lower layers (`pricing`, `zones`, `db`, `env`), never the reverse.

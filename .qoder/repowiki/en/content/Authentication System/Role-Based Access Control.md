@@ -2,16 +2,27 @@
 
 <cite>
 **Referenced Files in This Document**
+- [schema.prisma](file://prisma/schema.prisma)
 - [auth.config.ts](file://lib/auth.config.ts)
 - [auth.ts](file://lib/auth.ts)
 - [middleware.ts](file://middleware.ts)
-- [schema.prisma](file://prisma/schema.prisma)
-- [auth.actions.ts](file://server/auth.actions.ts)
+- [ops.service.ts](file://server/ops.service.ts)
+- [ops layout.tsx](file://app/ops/layout.tsx)
+- [site-header.tsx](file://components/layout/site-header.tsx)
 - [next-auth.d.ts](file://types/next-auth.d.ts)
+- [auth.actions.ts](file://server/auth.actions.ts)
 - [account layout.tsx](file://app/account/layout.tsx)
 - [signup-form.tsx](file://components/auth/signup-form.tsx)
 - [validation.ts](file://lib/validation.ts)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Added documentation for new STAFF and ADMIN roles in the three-tier hierarchy
+- Documented the operations interface with role-based authorization guards
+- Added layout-level authorization for the ops area requiring STAFF/ADMIN roles
+- Updated navigation conditional rendering based on user roles
+- Enhanced middleware and session handling for role-based route protection
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -19,24 +30,27 @@
 3. [Core Components](#core-components)
 4. [Architecture Overview](#architecture-overview)
 5. [Detailed Component Analysis](#detailed-component-analysis)
-6. [Dependency Analysis](#dependency-analysis)
-7. [Performance Considerations](#performance-considerations)
-8. [Troubleshooting Guide](#troubleshooting-guide)
-9. [Conclusion](#conclusion)
+6. [Operations Interface Authorization](#operations-interface-authorization)
+7. [Dependency Analysis](#dependency-analysis)
+8. [Performance Considerations](#performance-considerations)
+9. [Troubleshooting Guide](#troubleshooting-guide)
+10. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains Timberland’s role-based access control (RBAC) system. The application defines a three-tier role hierarchy: Customer, Staff, and Admin. Roles are stored on the user model, propagated through NextAuth sessions and JWTs, and enforced at the middleware layer for protected routes. While the current implementation protects the customer account area with authentication-only checks, the schema and session typing provide the foundation for extending to role-based route protection, server-side authorization, and UI-level feature gating.
+This document explains Timberland's enhanced role-based access control (RBAC) system. The application defines a three-tier role hierarchy: **Customer**, **Staff**, and **Admin**. Roles are stored on the user model, propagated through NextAuth sessions and JWTs, and enforced at multiple layers including middleware, layout components, and server services. The system now includes dedicated operations interface access controlled by STAFF and ADMIN roles, with comprehensive authorization guards throughout the application lifecycle.
 
 ## Project Structure
-The RBAC-related code is spread across configuration, runtime auth, middleware, data models, server actions, and type declarations:
+The RBAC-related code is spread across configuration, runtime auth, middleware, data models, server services, and UI components:
 
-- Data model and roles: Prisma schema defines the `Role` enum and attaches it to the `User` model.
-- Authentication configuration: Edge-safe NextAuth config injects role into tokens and sessions.
-- Runtime providers: Credentials provider reads users from the database and returns role during login.
-- Middleware: Guards `/account/*` routes using NextAuth’s edge-safe `authorized` callback.
-- Server actions: Signup flow creates users with default role and signs them in.
-- Type augmentation: Extends NextAuth types so `session.user.role` is strongly typed.
-- UI integration: Account layout uses the authenticated session; signup form triggers the server action that assigns roles.
+- Data model and roles: Prisma schema defines the `Role` enum with CUSTOMER, STAFF, and ADMIN values
+- Authentication configuration: Edge-safe NextAuth config injects role into tokens and sessions
+- Runtime providers: Credentials provider reads users from the database and returns role during login
+- Middleware: Guards `/account/*` routes using NextAuth's edge-safe `authorized` callback
+- Operations service: Centralized role checking utility for back-office operations
+- Layout authorization: Ops layout enforces STAFF/ADMIN role requirements
+- Conditional navigation: Site header shows ops link only for authorized users
+- Server actions: Signup flow creates users with default role and signs them in
+- Type augmentation: Extends NextAuth types so `session.user.role` is strongly typed
 
 ```mermaid
 graph TB
@@ -50,18 +64,23 @@ TYPES["next-auth.d.ts<br/>Session/JWT role types"]
 end
 subgraph "Edge Layer"
 MIDDLEWARE["middleware.ts<br/>Route matcher + authorized"]
+OPS_SERVICE["ops.service.ts<br/>getOpsSession()"]
+end
+subgraph "UI Layer"
+OPS_LAYOUT["app/ops/layout.tsx<br/>Layout-level auth guard"]
+SITE_HEADER["components/layout/site-header.tsx<br/>Conditional navigation"]
+ACCOUNT_LAYOUT["app/account/layout.tsx<br/>Session check"]
+SIGNUP_FORM["components/auth/signup-form.tsx<br/>Triggers signupAction"]
 end
 subgraph "Server Actions"
 ACTIONS["auth.actions.ts<br/>Signup + Login"]
-end
-subgraph "UI"
-ACCOUNT_LAYOUT["app/account/layout.tsx<br/>Session check"]
-SIGNUP_FORM["components/auth/signup-form.tsx<br/>Triggers signupAction"]
 end
 PRISMA --> AUTH_RUNTIME
 AUTH_RUNTIME --> AUTH_CONFIG
 AUTH_CONFIG --> MIDDLEWARE
 AUTH_CONFIG --> TYPES
+OPS_SERVICE --> OPS_LAYOUT
+SITE_HEADER --> AUTH_RUNTIME
 ACTIONS --> AUTH_RUNTIME
 SIGNUP_FORM --> ACTIONS
 MIDDLEWARE --> ACCOUNT_LAYOUT
@@ -73,10 +92,11 @@ MIDDLEWARE --> ACCOUNT_LAYOUT
 - [auth.config.ts:11-40](file://lib/auth.config.ts#L11-L40)
 - [auth.ts:9-35](file://lib/auth.ts#L9-L35)
 - [middleware.ts:1-13](file://middleware.ts#L1-L13)
+- [ops.service.ts:11-19](file://server/ops.service.ts#L11-L19)
+- [ops layout.tsx:9-15](file://app/ops/layout.tsx#L9-L15)
+- [site-header.tsx:41-45](file://components/layout/site-header.tsx#L41-L45)
 - [auth.actions.ts:26-80](file://server/auth.actions.ts#L26-L80)
 - [next-auth.d.ts:4-16](file://types/next-auth.d.ts#L4-L16)
-- [account layout.tsx:13-15](file://app/account/layout.tsx#L13-L15)
-- [signup-form.tsx:13-14](file://components/auth/signup-form.tsx#L13-L14)
 
 **Section sources**
 - [schema.prisma:17-21](file://prisma/schema.prisma#L17-L21)
@@ -84,24 +104,30 @@ MIDDLEWARE --> ACCOUNT_LAYOUT
 - [auth.config.ts:11-40](file://lib/auth.config.ts#L11-L40)
 - [auth.ts:9-35](file://lib/auth.ts#L9-L35)
 - [middleware.ts:1-13](file://middleware.ts#L1-L13)
+- [ops.service.ts:11-19](file://server/ops.service.ts#L11-L19)
+- [ops layout.tsx:9-15](file://app/ops/layout.tsx#L9-L15)
+- [site-header.tsx:41-45](file://components/layout/site-header.tsx#L41-L45)
 - [auth.actions.ts:26-80](file://server/auth.actions.ts#L26-L80)
 - [next-auth.d.ts:4-16](file://types/next-auth.d.ts#L4-L16)
-- [account layout.tsx:13-15](file://app/account/layout.tsx#L13-L15)
-- [signup-form.tsx:13-14](file://components/auth/signup-form.tsx#L13-L14)
 
 ## Core Components
-- Role model and defaults:
+- **Role model and defaults**:
   - The `Role` enum defines `CUSTOMER`, `STAFF`, and `ADMIN`.
   - The `User` model stores `role` with a default of `CUSTOMER`.
-- Session and token propagation:
-  - The credentials provider returns the user’s role during authentication.
+- **Session and token propagation**:
+  - The credentials provider returns the user's role during authentication.
   - The JWT callback sets `token.role`, defaulting to `CUSTOMER`.
   - The session callback copies `id` and `role` onto `session.user`.
-- Route protection:
+- **Route protection**:
   - Middleware guards `/account/*` using the `authorized` callback, requiring an authenticated user.
-- Signup flow:
+- **Operations interface authorization**:
+  - Centralized `getOpsSession()` function validates STAFF/ADMIN roles for back-office access.
+  - Layout-level guards redirect unauthorized users to appropriate destinations.
+- **Conditional navigation**:
+  - Site header conditionally displays ops link based on user role.
+- **Signup flow**:
   - The signup server action validates input, creates a user with role `CUSTOMER`, optionally auto-verifies email, and signs the user in.
-- Type safety:
+- **Type safety**:
   - NextAuth types are augmented so `session.user.role` is typed as one of the three roles.
 
 **Section sources**
@@ -109,12 +135,14 @@ MIDDLEWARE --> ACCOUNT_LAYOUT
 - [schema.prisma:57-78](file://prisma/schema.prisma#L57-L78)
 - [auth.ts:16-30](file://lib/auth.ts#L16-L30)
 - [auth.config.ts:26-39](file://lib/auth.config.ts#L26-L39)
-- [middleware.ts:18-25](file://lib/auth.config.ts#L18-L25)
+- [ops.service.ts:11-19](file://server/ops.service.ts#L11-L19)
+- [ops layout.tsx:9-15](file://app/ops/layout.tsx#L9-L15)
+- [site-header.tsx:41-45](file://components/layout/site-header.tsx#L41-L45)
 - [auth.actions.ts:26-80](file://server/auth.actions.ts#L26-L80)
 - [next-auth.d.ts:4-16](file://types/next-auth.d.ts#L4-L16)
 
 ## Architecture Overview
-The RBAC architecture integrates Prisma, NextAuth, and Next.js middleware:
+The enhanced RBAC architecture integrates Prisma, NextAuth, Next.js middleware, and dedicated operations services:
 
 ```mermaid
 sequenceDiagram
@@ -122,12 +150,31 @@ participant Client as "Browser"
 participant MW as "Next.js Middleware"
 participant AuthCfg as "auth.config.ts"
 participant AuthRT as "auth.ts"
+participant OpsSvc as "ops.service.ts"
+participant OpsLayout as "Ops Layout"
 participant DB as "PostgreSQL (Prisma)"
 participant UI as "Account Layout"
+Note over Client,DB : Customer Account Access
 Client->>MW : Request /account/*
 MW->>AuthCfg : authorized({ auth, request })
 AuthCfg-->>MW : Allow if authenticated
 MW-->>Client : Proceed or redirect to /login
+Note over Client,DB : Operations Interface Access
+Client->>OpsLayout : Request /ops/*
+OpsLayout->>AuthRT : auth()
+AuthRT-->>OpsLayout : Session { user }
+OpsLayout->>OpsSvc : getOpsSession()
+OpsSvc->>AuthRT : auth()
+AuthRT-->>OpsSvc : Session { user.role }
+OpsSvc->>OpsSvc : Validate STAFF/ADMIN role
+alt Authorized
+OpsSvc-->>OpsLayout : Return session
+OpsLayout-->>Client : Render ops interface
+else Unauthorized
+OpsSvc-->>OpsLayout : Return null
+OpsLayout-->>Client : Redirect to /account
+end
+Note over Client,DB : Authentication Flow
 Client->>AuthRT : signIn(credentials)
 AuthRT->>DB : Find user by email
 DB-->>AuthRT : User { id, email, name, role }
@@ -143,14 +190,16 @@ AuthRT-->>UI : Session { user.id, user.role }
 - [middleware.ts:1-13](file://middleware.ts#L1-L13)
 - [auth.config.ts:18-39](file://lib/auth.config.ts#L18-L39)
 - [auth.ts:16-30](file://lib/auth.ts#L16-L30)
+- [ops.service.ts:14-19](file://server/ops.service.ts#L14-L19)
+- [ops layout.tsx:9-15](file://app/ops/layout.tsx#L9-L15)
 - [account layout.tsx:13-15](file://app/account/layout.tsx#L13-L15)
 
 ## Detailed Component Analysis
 
 ### Role Model and Default Assignment
-- Role enumeration:
+- **Role enumeration**:
   - `Role` includes `CUSTOMER`, `STAFF`, `ADMIN`.
-- User model:
+- **User model**:
   - `User.role` defaults to `CUSTOMER`.
   - Index on `role` supports efficient queries.
 
@@ -184,12 +233,12 @@ USER ||--|| ROLE_ENUM : "has"
 - [schema.prisma:57-78](file://prisma/schema.prisma#L57-L78)
 
 ### Authentication Flow and Role Propagation
-- Credentials provider:
+- **Credentials provider**:
   - Validates email/password via Prisma and crypto utilities.
   - Returns user fields including `role`.
-- JWT callback:
+- **JWT callback**:
   - Sets `token.id` and `token.role`; defaults to `CUSTOMER` when missing.
-- Session callback:
+- **Session callback**:
   - Copies `id` and `role` onto `session.user`.
 
 ```mermaid
@@ -214,10 +263,10 @@ Fail --> End
 - [auth.config.ts:26-39](file://lib/auth.config.ts#L26-L39)
 
 ### Middleware and Route Protection
-- Middleware setup:
-  - Uses NextAuth’s edge-safe `auth` function.
+- **Middleware setup**:
+  - Uses NextAuth's edge-safe `auth` function.
   - Matcher restricts protection to `/account/:path*`.
-- Authorized callback:
+- **Authorized callback**:
   - Checks if the pathname starts with `/account`.
   - Requires an authenticated user; otherwise redirects to `/login`.
 
@@ -239,12 +288,12 @@ CheckAuth --> |No| Redirect["Redirect to /login"]
 - [auth.config.ts:18-25](file://lib/auth.config.ts#L18-L25)
 
 ### Signup Flow and Role Assignment
-- Validation:
+- **Validation**:
   - Uses Zod schemas for name, email, phone, and password.
-- Creation:
+- **Creation**:
   - Hashes password, generates verification token, and creates user with role `CUSTOMER`.
   - Auto-verifies email when SMTP is disabled.
-- Sign-in:
+- **Sign-in**:
   - Immediately signs in the new user and redirects to `/account`.
 
 ```mermaid
@@ -333,14 +382,73 @@ JWT_Token <|-- Base_User : "extends"
 - [next-auth.d.ts:4-16](file://types/next-auth.d.ts#L4-L16)
 - [next-auth.d.ts:18-23](file://types/next-auth.d.ts#L18-L23)
 
+## Operations Interface Authorization
+
+### Role-Based Access Control for Back-Office Operations
+The operations interface implements comprehensive role-based authorization to protect sensitive back-office functionality. Only users with STAFF or ADMIN roles can access the operations dashboard and related endpoints.
+
+#### Centralized Authorization Service
+The `getOpsSession()` function serves as the primary authorization gatekeeper for all operations-related functionality:
+
+```mermaid
+flowchart TD
+GetOps["getOpsSession()"] --> Auth["auth()"]
+Auth --> CheckUser{"Has valid user?"}
+CheckUser --> |No| ReturnNull["Return null"]
+CheckUser --> |Yes| CheckRole{"Role is STAFF or ADMIN?"}
+CheckRole --> |No| ReturnNull
+CheckRole --> |Yes| ReturnSession["Return session"]
+```
+
+**Diagram sources**
+- [ops.service.ts:14-19](file://server/ops.service.ts#L14-L19)
+
+#### Layout-Level Authorization Guards
+The operations layout enforces role-based access at the component level, providing immediate feedback and proper redirection for unauthorized users:
+
+- **Authentication check**: Redirects unauthenticated users to `/login`
+- **Role validation**: Redirects non-STAFF/ADMIN users to `/account`
+- **Protected content**: Renders operations interface only for authorized users
+
+#### Conditional Navigation
+The site header dynamically adjusts navigation based on user roles:
+
+- **STAFF/ADMIN users**: See "Ops" link in the main navigation
+- **Customer users**: Only see standard navigation links
+- **Unauthenticated users**: See sign-in/create account options
+
+```mermaid
+flowchart TD
+Header["Site Header"] --> Auth["auth()"]
+Auth --> User{"Has user?"}
+User --> |No| PublicNav["Public navigation"]
+User --> |Yes| CheckRole{"Role check"}
+CheckRole --> |STAFF/ADMIN| ShowOps["Show Ops link"]
+CheckRole --> |CUSTOMER| HideOps["Hide Ops link"]
+ShowOps --> AccountLink["Show Account link"]
+HideOps --> AccountLink
+AccountLink --> SignOut["Sign out button"]
+```
+
+**Diagram sources**
+- [site-header.tsx:41-45](file://components/layout/site-header.tsx#L41-L45)
+
+**Section sources**
+- [ops.service.ts:11-19](file://server/ops.service.ts#L11-L19)
+- [ops layout.tsx:9-15](file://app/ops/layout.tsx#L9-L15)
+- [site-header.tsx:41-45](file://components/layout/site-header.tsx#L41-L45)
+
 ## Dependency Analysis
-The following diagram shows how RBAC components depend on each other:
+The following diagram shows how RBAC components depend on each other with the enhanced operations interface:
 
 ```mermaid
 graph LR
 SCHEMA["schema.prisma"] --> AUTH_RT["auth.ts"]
 AUTH_RT --> AUTH_CFG["auth.config.ts"]
 AUTH_CFG --> MW["middleware.ts"]
+AUTH_RT --> OPS_SVC["ops.service.ts"]
+OPS_SVC --> OPS_LAYOUT["app/ops/layout.tsx"]
+OPS_SVC --> SITE_HEADER["components/layout/site-header.tsx"]
 ACTIONS["auth.actions.ts"] --> AUTH_RT
 TYPES["next-auth.d.ts"] --> AUTH_CFG
 UI_LAYOUT["app/account/layout.tsx"] --> AUTH_RT
@@ -352,6 +460,9 @@ SIGNUP_UI["components/auth/signup-form.tsx"] --> ACTIONS
 - [auth.ts:1-42](file://lib/auth.ts#L1-L42)
 - [auth.config.ts:1-42](file://lib/auth.config.ts#L1-L42)
 - [middleware.ts:1-13](file://middleware.ts#L1-L13)
+- [ops.service.ts:1-163](file://server/ops.service.ts#L1-L163)
+- [ops layout.tsx:1-48](file://app/ops/layout.tsx#L1-L48)
+- [site-header.tsx:1-77](file://components/layout/site-header.tsx#L1-L77)
 - [auth.actions.ts:1-101](file://server/auth.actions.ts#L1-L101)
 - [next-auth.d.ts:1-24](file://types/next-auth.d.ts#L1-L24)
 - [account layout.tsx:1-39](file://app/account/layout.tsx#L1-L39)
@@ -362,42 +473,61 @@ SIGNUP_UI["components/auth/signup-form.tsx"] --> ACTIONS
 - [auth.ts:1-42](file://lib/auth.ts#L1-L42)
 - [auth.config.ts:1-42](file://lib/auth.config.ts#L1-L42)
 - [middleware.ts:1-13](file://middleware.ts#L1-L13)
+- [ops.service.ts:1-163](file://server/ops.service.ts#L1-L163)
+- [ops layout.tsx:1-48](file://app/ops/layout.tsx#L1-L48)
+- [site-header.tsx:1-77](file://components/layout/site-header.tsx#L1-L77)
 - [auth.actions.ts:1-101](file://server/auth.actions.ts#L1-L101)
 - [next-auth.d.ts:1-24](file://types/next-auth.d.ts#L1-L24)
 - [account layout.tsx:1-39](file://app/account/layout.tsx#L1-L39)
 - [signup-form.tsx:1-39](file://components/auth/signup-form.tsx#L1-L39)
 
 ## Performance Considerations
-- Minimal overhead:
+- **Minimal overhead**:
   - Role is a small field on the JWT and session; copying it incurs negligible cost.
-- Database indexing:
+  - Operations authorization checks are lightweight role comparisons.
+- **Database indexing**:
   - An index on `User.role` improves queries filtering by role.
-- Edge middleware:
-  - Using NextAuth’s edge-safe configuration avoids heavy Node dependencies in middleware.
-
-[No sources needed since this section provides general guidance]
+- **Edge middleware**:
+  - Using NextAuth's edge-safe configuration avoids heavy Node dependencies in middleware.
+- **Centralized authorization**:
+  - Single `getOpsSession()` function reduces code duplication and ensures consistent authorization logic.
 
 ## Troubleshooting Guide
-- Unauthenticated access to `/account/*`:
+- **Unauthenticated access to `/account/*`**:
   - Ensure the `authorized` callback allows only authenticated users and that the matcher covers the intended paths.
-- Missing role in session:
+- **Unauthorized access to operations interface**:
+  - Verify that users attempting to access `/ops/*` have STAFF or ADMIN roles.
+  - Check that `getOpsSession()` properly validates roles before returning session data.
+- **Missing role in session**:
   - Verify that the credentials provider returns `role` and that the JWT/session callbacks populate `token.role` and `session.user.role`.
-- Signup not assigning role:
+- **Ops link not appearing in navigation**:
+  - Confirm that the user has STAFF or ADMIN role in their session.
+  - Check that the conditional rendering in site-header.tsx is working correctly.
+- **Signup not assigning role**:
   - Confirm that the signup action sets `role: "CUSTOMER"` when creating the user.
-- Type errors accessing `session.user.role`:
+- **Type errors accessing `session.user.role`**:
   - Ensure NextAuth types are augmented correctly and that the app imports the augmented types.
 
 **Section sources**
 - [auth.config.ts:18-39](file://lib/auth.config.ts#L18-L39)
 - [auth.ts:16-30](file://lib/auth.ts#L16-L30)
+- [ops.service.ts:14-19](file://server/ops.service.ts#L14-L19)
+- [site-header.tsx:41-45](file://components/layout/site-header.tsx#L41-L45)
 - [auth.actions.ts:53-67](file://server/auth.actions.ts#L53-L67)
 - [next-auth.d.ts:4-16](file://types/next-auth.d.ts#L4-L16)
 
 ## Conclusion
-Timberland’s RBAC system centers on a clear three-tier role model (`CUSTOMER`, `STAFF`, `ADMIN`) defined in the Prisma schema and propagated through NextAuth’s JWT and session layers. The current middleware enforces authentication for the customer account area, while the signup flow assigns the default `CUSTOMER` role. To extend this system:
-- Add role checks in the `authorized` callback to enforce per-role route access.
-- Implement server-side authorization in actions to restrict admin/staff operations.
-- Use the strongly-typed `session.user.role` to gate UI features conditionally.
-These patterns provide a solid foundation for scalable role inheritance and permission checking across the application.
+Timberland's enhanced RBAC system centers on a clear three-tier role model (`CUSTOMER`, `STAFF`, `ADMIN`) defined in the Prisma schema and propagated through NextAuth's JWT and session layers. The system now provides comprehensive protection for both customer-facing features and sensitive back-office operations:
 
-[No sources needed since this section summarizes without analyzing specific files]
+- **Customer accounts**: Protected by middleware requiring authentication
+- **Operations interface**: Protected by layout-level guards requiring STAFF/ADMIN roles
+- **Conditional navigation**: Dynamic UI elements based on user roles
+- **Centralized authorization**: Reusable `getOpsSession()` function for consistent role checking
+
+To extend this system further:
+- Add more granular permission checks within server actions for specific operations
+- Implement role inheritance patterns where ADMIN inherits STAFF permissions
+- Add audit logging for role-based access attempts
+- Use the strongly-typed `session.user.role` to gate additional UI features conditionally
+
+These patterns provide a solid foundation for scalable role inheritance and permission checking across the entire application, ensuring both security and maintainability.

@@ -1,1 +1,0 @@
-Next.js 16 + React 19, TypeScript strict mode, Prisma 6 with PostgreSQL 16, NextAuth v5 beta, Tailwind CSS v4 via Turbopack, Zod for validation, bcryptjs for password hashing, Nodemailer for notifications, Vitest for unit tests and Playwright for E2E.

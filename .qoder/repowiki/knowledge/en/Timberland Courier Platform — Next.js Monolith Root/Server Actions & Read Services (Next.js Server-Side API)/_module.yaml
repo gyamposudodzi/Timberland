@@ -1,9 +1,0 @@
-schema_version: 1
-module_path: server_actions
-title: Server Actions & Read Services (Next.js Server-Side API)
-scope:
-    - server/
-source_files: []
-depends_on: []
-related_to:
-    - path: app_routes

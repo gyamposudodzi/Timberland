@@ -3,87 +3,24 @@ schema_version: 1
 locale: en-US
 branch: main
 nodes_managed: true
-exported_at: "2026-10-18T20:05:16Z"
+exported_at: "2026-10-18T21:31:24Z"
 modules:
     "":
-        dir_name: Timberland Courier Platform — Next.js Monolith Root
-        title: Timberland Courier Platform — Next.js Monolith Root
-        scope:
-            - README.md
-            - AGENTS.md
-            - .gitignore
-            - package.json
-            - package-lock.json
-            - tsconfig.json
-            - next.config.ts
-            - eslint.config.mjs
-            - vitest.config.ts
-            - playwright.config.ts
-            - middleware.ts
-            - .env.example
-            - docker-compose.yml
+        dir_name: Timberland Shipping Next.js App
+        title: Timberland Shipping Next.js App
+        scope: []
         source_files: []
         children:
-            - app_routes
-            - components
-            - lib
-            - prisma_schema
-            - server_actions
-            - tests
+            - ops
         depends_on: []
         related_to: []
-    app_routes:
-        dir_name: Next.js App Router Public & Account Routes
-        title: Next.js App Router Public & Account Routes
+    ops:
+        dir_name: Operations Back Office E2E Tests
+        title: Operations Back Office E2E Tests
         scope:
-            - app/
-        source_files: []
-        children: []
-        depends_on: []
-        related_to:
-            - path: server_actions
-    components:
-        dir_name: Timberland UI Component Library & Feature Components
-        title: Timberland UI Component Library & Feature Components
-        scope:
-            - components/
-        source_files: []
-        children: []
-        depends_on: []
-        related_to: []
-    lib:
-        dir_name: Shared Server-Side Library (Auth, Pricing, Validation & Domain Primitives)
-        title: Shared Server-Side Library (Auth, Pricing, Validation & Domain Primitives)
-        scope:
-            - lib/
-        source_files: []
-        children: []
-        depends_on: []
-        related_to: []
-    prisma_schema:
-        dir_name: Timberland Courier Platform — Prisma Data Schema & Seed
-        title: Timberland Courier Platform — Prisma Data Schema & Seed
-        scope:
-            - prisma/
-        source_files: []
-        children: []
-        depends_on: []
-        related_to: []
-    server_actions:
-        dir_name: Server Actions & Read Services (Next.js Server-Side API)
-        title: Server Actions & Read Services (Next.js Server-Side API)
-        scope:
-            - server/
-        source_files: []
-        children: []
-        depends_on: []
-        related_to:
-            - path: app_routes
-    tests:
-        dir_name: Timberland Test Suite (Vitest Unit + Playwright E2E)
-        title: Timberland Test Suite (Vitest Unit + Playwright E2E)
-        scope:
-            - tests/
+            - app/ops/
+            - components/ops/
+            - tests/e2e/ops.spec.ts
         source_files: []
         children: []
         depends_on: []

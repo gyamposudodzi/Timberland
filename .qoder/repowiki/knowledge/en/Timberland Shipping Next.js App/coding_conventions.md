@@ -1,0 +1,4 @@
+- Server-side logic is implemented as Server Actions in `server/*.actions.ts` with pure service functions in `server/*.service.ts` that import `@/lib/db` directly.
+- Route handlers in `app/api/auth/[...nextauth]/route.ts` delegate to the centralized NextAuth config in `lib/auth.config.ts`.
+- Input validation uses Zod schemas defined in `lib/validation.ts` and reused across both UI forms and Server Actions.
+- UI components under `components/ui/` are primitive shadcn-style primitives (button, card, input, badge, alert) composed into feature-specific components.

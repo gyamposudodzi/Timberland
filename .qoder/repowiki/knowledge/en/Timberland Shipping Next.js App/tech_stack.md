@@ -1,0 +1,1 @@
+Next.js 16 App Router with React 19, NextAuth v5 beta (Prisma adapter), Prisma 6 for data access, Zod v4 for validation, Tailwind CSS v4, Vitest for unit tests, Playwright for E2E, tsx for seeding.

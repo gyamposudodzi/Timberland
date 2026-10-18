@@ -1,0 +1,1 @@
+Playwright end-to-end tests covering the staff-only /ops back office: role-gated access, shipment queue navigation, status transitions via server actions, and internal note visibility.

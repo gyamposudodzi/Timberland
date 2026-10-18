@@ -1,0 +1,1 @@
+Playwright (`@playwright/test`) with role-based selectors (`getByRole`, `getByLabel`) and URL assertions; Prisma is closed via a shared helper after all tests.

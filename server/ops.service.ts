@@ -1,11 +1,11 @@
 import "server-only";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { SHIPMENT_STATUSES, isCompleted, type ShipmentStatus } from "@/lib/shipment-status";
 
 /**
- * Back-office (non-GUI in spirit, thin UI for v1) read helpers.
- * Access is gated by staff/admin role — enforced here for reads and again in
- * the server actions for writes.
+ * Back-office read helpers. Access is gated by staff/admin role — enforced here
+ * for reads and again in the server actions for writes.
  */
 
 export const OPS_ROLES = ["STAFF", "ADMIN"] as const;
@@ -18,36 +18,129 @@ export async function getOpsSession() {
   return session;
 }
 
-export interface OpsListFilters {
+export interface OpsListQuery {
   q?: string;
   status?: string;
+  page?: number;
+  pageSize?: number;
 }
 
-/** Shipments across all customers, for the ops queue. */
-export function listShipmentsForOps({ q, status }: OpsListFilters = {}) {
-  return prisma.shipment.findMany({
-    where: {
-      // Optional status filter; ignore anything not a valid enum value.
-      ...(status && /^[A-Z_]+$/.test(status) ? { status: status as never } : {}),
-      ...(q && q.trim()
-        ? { trackingNumber: { contains: q.trim().toUpperCase() } }
-        : {}),
-    },
-    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-    take: 100,
-    select: {
-      id: true,
-      trackingNumber: true,
-      status: true,
-      updatedAt: true,
-      createdAt: true,
-      price: true,
-      currency: true,
-      serviceLevel: { select: { name: true } },
-      recipientAddress: { select: { city: true, country: true } },
-      user: { select: { email: true, name: true } },
-    },
+export interface OpsListResult<T> {
+  shipments: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  pageCount: number;
+}
+
+const NON_TERMINAL = SHIPMENT_STATUSES.filter((s) => !isCompleted(s));
+
+/** Translate the UI status token into a Prisma `where` fragment. */
+function statusWhere(status?: string) {
+  if (!status) return {};
+  if (status === "ACTIVE") return { status: { in: NON_TERMINAL as unknown as ShipmentStatus[] } };
+  if ((SHIPMENT_STATUSES as readonly string[]).includes(status)) return { status: status as ShipmentStatus };
+  return {};
+}
+
+/** Shipments across all customers, paginated, for the ops queue. */
+export async function listShipmentsForOps({
+  q,
+  status,
+  page = 1,
+  pageSize = 10,
+}: OpsListQuery = {}): Promise<
+  OpsListResult<{
+    id: string;
+    trackingNumber: string;
+    status: ShipmentStatus;
+    updatedAt: Date;
+    createdAt: Date;
+    price: import("@prisma/client").Prisma.Decimal;
+    currency: string;
+    serviceLevel: { name: string };
+    recipientAddress: { city: string; country: string };
+    user: { email: string; name: string | null } | null;
+  }>
+> {
+  const where = {
+    ...statusWhere(status),
+    ...(q && q.trim() ? { trackingNumber: { contains: q.trim().toUpperCase() } } : {}),
+  };
+
+  const safePage = Math.max(1, Math.floor(page) || 1);
+  const take = Math.min(100, Math.max(1, Math.floor(pageSize) || 10));
+
+  const [total, shipments] = await prisma.$transaction([
+    prisma.shipment.count({ where }),
+    prisma.shipment.findMany({
+      where,
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+      skip: (safePage - 1) * take,
+      take,
+      select: {
+        id: true,
+        trackingNumber: true,
+        status: true,
+        updatedAt: true,
+        createdAt: true,
+        price: true,
+        currency: true,
+        serviceLevel: { select: { name: true } },
+        recipientAddress: { select: { city: true, country: true } },
+        user: { select: { email: true, name: true } },
+      },
+    }),
+  ]);
+
+  return {
+    shipments,
+    total,
+    page: safePage,
+    pageSize: take,
+    pageCount: Math.max(1, Math.ceil(total / take)),
+  };
+}
+
+export interface StatusCount {
+  status: ShipmentStatus;
+  count: number;
+}
+
+export interface OpsSummary {
+  total: number;
+  active: number;
+  exceptions: number;
+  delivered: number;
+  byStatus: Record<ShipmentStatus, number>;
+}
+
+/** At-a-glance counts for the ops dashboard, independent of the current filter. */
+export async function getStatusSummary(): Promise<OpsSummary> {
+  const grouped = await prisma.shipment.groupBy({
+    by: ["status"],
+    _count: { _all: true },
   });
+
+  const byStatus = {} as Record<ShipmentStatus, number>;
+  for (const s of SHIPMENT_STATUSES) byStatus[s] = 0;
+  let total = 0;
+  for (const row of grouped) {
+    const status = row.status as ShipmentStatus;
+    const count = row._count._all;
+    byStatus[status] = count;
+    total += count;
+  }
+
+  const active = NON_TERMINAL.reduce((sum, s) => sum + byStatus[s], 0);
+
+  return {
+    total,
+    active,
+    exceptions: byStatus.EXCEPTION,
+    delivered: byStatus.DELIVERED,
+    byStatus,
+  };
 }
 
 /** Full shipment detail (including internal, non-public events) for operators. */

@@ -1,6 +1,0 @@
-- Server action entry points are declared at the top of their file with the `"use server"` directive and accept either `(prev, formData)` or a single parsed payload.
-- All user-supplied input is validated through a Zod schema from `@/lib/validation` before any database write, with failures returned as `{ ok: false, error: ... }`.
-- Mutating actions return the shared `ActionResult` shape (`ok`, optional `error`, optional `fieldErrors`) so callers can render consistent success/error UI.
-- Read-only queries live in separate `*.service.ts` files that import `server-only` and expose plain functions rather than wrapping them in actions.
-- Guest-facing APIs (e.g. tracking) sanitize output by selecting only non-sensitive fields and using a discriminated union result type (`TrackedResult`) instead of throwing on not-found.
-- Background / fire-and-forget side effects (e.g. notification emails) are invoked with `.catch(() => {})` so failures do not abort the primary transaction.

@@ -1,5 +1,0 @@
-- Primary keys are generated with `cuid()` and all timestamp fields default to `now()` with `updatedAt` fields using `@updatedAt`.
-- Decimal monetary and dimensional values are declared with explicit `@db.Decimal(precision, scale)` annotations rather than raw Decimal types.
-- Foreign key relations are declared explicitly via `fields:` / `references:` tuples with either `onDelete: Cascade` (for child-owned records like Parcel/TrackingEvent) or `onDelete: SetNull` (for optional references like Address→User).
-- Multi-column uniqueness is expressed with `@@unique([...])` pragmas (e.g., RateRule zone+serviceLevel, NotificationPreference userId+channel).
-- Frequently queried columns receive dedicated indexes via `@@index(...)` pragmas (e.g., Shipment status/createdAt/userId, TrackingEvent shipmentId, Address postalCode).

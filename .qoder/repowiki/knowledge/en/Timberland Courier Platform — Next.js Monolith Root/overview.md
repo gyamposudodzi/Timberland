@@ -1,1 +1,0 @@
-Root of the Timberland v1 courier delivery web app, wiring a single Next.js App Router monolith whose children provide routes, UI components, server actions, Prisma schema, and tests against PostgreSQL.

@@ -1,1 +1,0 @@
-E2E tests require a running Next.js app and a seeded database — `findDeliveredShipment()` throws unless `npm run db:seed` has been executed first.

@@ -1,8 +1,0 @@
-schema_version: 1
-module_path: prisma_schema
-title: Timberland Courier Platform — Prisma Data Schema & Seed
-scope:
-    - prisma/
-source_files: []
-depends_on: []
-related_to: []

@@ -1,1 +1,0 @@
-NextAuth v5 (JWT strategy) with Credentials + optional Google provider; Prisma Client as the sole DB client; Zod for input validation; bcryptjs for password hashing; nodemailer for email (with JSON transport fallback); clsx + tailwind-merge for class merging utilities.

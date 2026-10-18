@@ -9,6 +9,7 @@ import { TrackingTimeline } from "@/components/tracking/tracking-timeline";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AdvanceStatusForm } from "@/components/ops/advance-status-form";
+import { InternalNoteForm } from "@/components/ops/internal-note-form";
 
 export const metadata = { title: "Shipment — Operations" };
 
@@ -77,6 +78,16 @@ export default async function OpsShipmentPage({ params }: { params: Promise<{ id
             </CardHeader>
             <CardContent>
               <AdvanceStatusForm shipmentId={shipment.id} currentStatus={status} allowed={allowed} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Internal note</CardTitle>
+              <CardDescription>Staff-only context; does not change status.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <InternalNoteForm shipmentId={shipment.id} currentStatus={status} />
             </CardContent>
           </Card>
 

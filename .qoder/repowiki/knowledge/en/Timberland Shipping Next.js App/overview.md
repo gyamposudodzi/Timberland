@@ -1,0 +1,1 @@
+Next.js 16 application wiring a customer-facing shipping portal, an ops back office, and shared server actions around Prisma + NextAuth with Playwright E2E tests.
