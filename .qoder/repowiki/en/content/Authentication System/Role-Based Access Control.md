@@ -18,11 +18,13 @@
 
 ## Update Summary
 **Changes Made**
-- Added documentation for new STAFF and ADMIN roles in the three-tier hierarchy
-- Documented the operations interface with role-based authorization guards
-- Added layout-level authorization for the ops area requiring STAFF/ADMIN roles
-- Updated navigation conditional rendering based on user roles
-- Enhanced middleware and session handling for role-based route protection
+- Enhanced documentation to reflect the complete three-tier role hierarchy (CUSTOMER, STAFF, ADMIN)
+- Added comprehensive coverage of the centralized `getOpsSession()` authorization function
+- Documented the operations interface with robust role-based authorization guards
+- Updated layout-level authorization patterns for the ops area requiring STAFF/ADMIN roles
+- Enhanced conditional navigation documentation showing dynamic UI elements based on user roles
+- Expanded middleware integration details for /ops route protection
+- Added detailed examples of role inheritance patterns and permission checking utilities
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -31,26 +33,30 @@
 4. [Architecture Overview](#architecture-overview)
 5. [Detailed Component Analysis](#detailed-component-analysis)
 6. [Operations Interface Authorization](#operations-interface-authorization)
-7. [Dependency Analysis](#dependency-analysis)
-8. [Performance Considerations](#performance-considerations)
-9. [Troubleshooting Guide](#troubleshooting-guide)
-10. [Conclusion](#conclusion)
+7. [Role Hierarchy and Inheritance Patterns](#role-hierarchy-and-inheritance-patterns)
+8. [Permission Checking Utilities](#permission-checking-utilities)
+9. [Dependency Analysis](#dependency-analysis)
+10. [Performance Considerations](#performance-considerations)
+11. [Troubleshooting Guide](#troubleshooting-guide)
+12. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains Timberland's enhanced role-based access control (RBAC) system. The application defines a three-tier role hierarchy: **Customer**, **Staff**, and **Admin**. Roles are stored on the user model, propagated through NextAuth sessions and JWTs, and enforced at multiple layers including middleware, layout components, and server services. The system now includes dedicated operations interface access controlled by STAFF and ADMIN roles, with comprehensive authorization guards throughout the application lifecycle.
+This document explains Timberland's comprehensive role-based access control (RBAC) system. The application implements a sophisticated three-tier role hierarchy: **Customer**, **Staff**, and **Admin**. Roles are stored on the user model, propagated through NextAuth sessions and JWTs, and enforced at multiple layers including middleware, layout components, and server services. The system provides dedicated operations interface access controlled by STAFF and ADMIN roles, with comprehensive authorization guards throughout the application lifecycle.
+
+The RBAC system ensures that customer users can only access their personal dashboard and shipment management features, while staff and admin users gain access to back-office operations including shipment tracking, status updates, and administrative functions.
 
 ## Project Structure
-The RBAC-related code is spread across configuration, runtime auth, middleware, data models, server services, and UI components:
+The RBAC-related code is strategically distributed across configuration, runtime authentication, middleware, data models, server services, and UI components:
 
-- Data model and roles: Prisma schema defines the `Role` enum with CUSTOMER, STAFF, and ADMIN values
-- Authentication configuration: Edge-safe NextAuth config injects role into tokens and sessions
-- Runtime providers: Credentials provider reads users from the database and returns role during login
-- Middleware: Guards `/account/*` routes using NextAuth's edge-safe `authorized` callback
-- Operations service: Centralized role checking utility for back-office operations
-- Layout authorization: Ops layout enforces STAFF/ADMIN role requirements
-- Conditional navigation: Site header shows ops link only for authorized users
-- Server actions: Signup flow creates users with default role and signs them in
-- Type augmentation: Extends NextAuth types so `session.user.role` is strongly typed
+- **Data model and roles**: Prisma schema defines the `Role` enum with CUSTOMER, STAFF, and ADMIN values, with an index on the role field for efficient queries
+- **Authentication configuration**: Edge-safe NextAuth config injects role into tokens and sessions during authentication flow
+- **Runtime providers**: Credentials provider reads users from the database and returns role during login process
+- **Middleware**: Guards `/account/*` routes using NextAuth's edge-safe `authorized` callback for customer account protection
+- **Operations service**: Centralized role checking utility via `getOpsSession()` for back-office operations security
+- **Layout authorization**: Ops layout enforces STAFF/ADMIN role requirements at the component level
+- **Conditional navigation**: Site header dynamically shows/hides ops link based on user role permissions
+- **Server actions**: Signup flow creates users with default CUSTOMER role and handles authentication
+- **Type augmentation**: Extends NextAuth types so `session.user.role` is strongly typed across the application
 
 ```mermaid
 graph TB
@@ -114,6 +120,7 @@ MIDDLEWARE --> ACCOUNT_LAYOUT
 - **Role model and defaults**:
   - The `Role` enum defines `CUSTOMER`, `STAFF`, and `ADMIN`.
   - The `User` model stores `role` with a default of `CUSTOMER`.
+  - Database indexing on `role` field optimizes role-based queries.
 - **Session and token propagation**:
   - The credentials provider returns the user's role during authentication.
   - The JWT callback sets `token.role`, defaulting to `CUSTOMER`.
@@ -438,6 +445,84 @@ AccountLink --> SignOut["Sign out button"]
 - [ops layout.tsx:9-15](file://app/ops/layout.tsx#L9-L15)
 - [site-header.tsx:41-45](file://components/layout/site-header.tsx#L41-L45)
 
+## Role Hierarchy and Inheritance Patterns
+
+### Three-Tier Role Structure
+Timberland implements a clear hierarchical role structure:
+
+1. **CUSTOMER**: Default role for all registered users
+   - Access to personal dashboard
+   - Shipment creation and tracking
+   - Address management
+   - Notification preferences
+
+2. **STAFF**: Operational role for logistics personnel
+   - All CUSTOMER permissions
+   - Access to operations dashboard
+   - Shipment status updates
+   - Internal note management
+
+3. **ADMIN**: Administrative role with full system access
+   - All STAFF permissions
+   - Full administrative capabilities
+   - System-wide oversight
+
+### Role Inheritance Implementation
+The system implements role inheritance through explicit checks rather than automatic inheritance:
+
+```mermaid
+flowchart TD
+ADMIN["ADMIN Role"] --> StaffPermissions["All STAFF Permissions"]
+STAFF["STAFF Role"] --> CustomerPermissions["All CUSTOMER Permissions"]
+CUSTOMER["CUSTOMER Role"] --> BasicAccess["Basic Application Access"]
+ADMIN -.-> DirectAdmin["Direct Admin Functions"]
+STAFF -.-> DirectStaff["Direct Staff Functions"]
+CUSTOMER -.-> DirectCustomer["Direct Customer Functions"]
+```
+
+**Diagram sources**
+- [ops.service.ts:11](file://server/ops.service.ts#L11)
+- [site-header.tsx:41-45](file://components/layout/site-header.tsx#L41-L45)
+
+### Permission Escalation Controls
+- **Explicit role checks**: Each protected endpoint explicitly checks for required roles
+- **Defense in depth**: Multiple layers of authorization (middleware, layout, server actions)
+- **Audit-ready**: Clear separation between read and write operations with additional authorization
+
+**Section sources**
+- [ops.service.ts:11-19](file://server/ops.service.ts#L11-L19)
+- [site-header.tsx:41-45](file://components/layout/site-header.tsx#L41-L45)
+
+## Permission Checking Utilities
+
+### Centralized Authorization Function
+The `getOpsSession()` function provides a reusable authorization pattern:
+
+```typescript
+export async function getOpsSession() {
+  const session = await auth();
+  const role = session?.user?.role;
+  if (!session?.user?.id || !role || !(OPS_ROLES as readonly string[]).includes(role)) return null;
+  return session;
+}
+```
+
+### Role Constants and Validation
+- **OPS_ROLES constant**: Defines allowed roles for operations access as `["STAFF", "ADMIN"]`
+- **Type-safe validation**: Uses TypeScript's `as const` for compile-time role validation
+- **Consistent checking**: Single source of truth for role-based authorization logic
+
+### Pattern for Custom Permission Checks
+To implement custom permission checks:
+
+1. Define role constants for specific operations
+2. Create helper functions that validate both authentication and authorization
+3. Use these helpers consistently across server actions and API endpoints
+4. Implement defensive programming with null checks and proper error handling
+
+**Section sources**
+- [ops.service.ts:11-19](file://server/ops.service.ts#L11-L19)
+
 ## Dependency Analysis
 The following diagram shows how RBAC components depend on each other with the enhanced operations interface:
 
@@ -491,6 +576,8 @@ SIGNUP_UI["components/auth/signup-form.tsx"] --> ACTIONS
   - Using NextAuth's edge-safe configuration avoids heavy Node dependencies in middleware.
 - **Centralized authorization**:
   - Single `getOpsSession()` function reduces code duplication and ensures consistent authorization logic.
+- **Type safety benefits**:
+  - Compile-time type checking prevents runtime errors from invalid role assignments.
 
 ## Troubleshooting Guide
 - **Unauthenticated access to `/account/*`**:
@@ -507,6 +594,9 @@ SIGNUP_UI["components/auth/signup-form.tsx"] --> ACTIONS
   - Confirm that the signup action sets `role: "CUSTOMER"` when creating the user.
 - **Type errors accessing `session.user.role`**:
   - Ensure NextAuth types are augmented correctly and that the app imports the augmented types.
+- **Role-based routing issues**:
+  - Verify that middleware configuration matches the intended route patterns.
+  - Check that layout-level authorization guards are properly implemented.
 
 **Section sources**
 - [auth.config.ts:18-39](file://lib/auth.config.ts#L18-L39)
@@ -517,17 +607,20 @@ SIGNUP_UI["components/auth/signup-form.tsx"] --> ACTIONS
 - [next-auth.d.ts:4-16](file://types/next-auth.d.ts#L4-L16)
 
 ## Conclusion
-Timberland's enhanced RBAC system centers on a clear three-tier role model (`CUSTOMER`, `STAFF`, `ADMIN`) defined in the Prisma schema and propagated through NextAuth's JWT and session layers. The system now provides comprehensive protection for both customer-facing features and sensitive back-office operations:
+Timberland's comprehensive RBAC system centers on a clear three-tier role model (`CUSTOMER`, `STAFF`, `ADMIN`) defined in the Prisma schema and propagated through NextAuth's JWT and session layers. The system provides robust protection for both customer-facing features and sensitive back-office operations:
 
 - **Customer accounts**: Protected by middleware requiring authentication
 - **Operations interface**: Protected by layout-level guards requiring STAFF/ADMIN roles
 - **Conditional navigation**: Dynamic UI elements based on user roles
 - **Centralized authorization**: Reusable `getOpsSession()` function for consistent role checking
+- **Role inheritance**: Clear hierarchy with explicit permission checks
+- **Type safety**: Strongly-typed role validation throughout the application
 
 To extend this system further:
 - Add more granular permission checks within server actions for specific operations
-- Implement role inheritance patterns where ADMIN inherits STAFF permissions
+- Implement fine-grained permission matrices for complex business rules
 - Add audit logging for role-based access attempts
 - Use the strongly-typed `session.user.role` to gate additional UI features conditionally
+- Consider implementing role-based feature flags for gradual rollout of new functionality
 
-These patterns provide a solid foundation for scalable role inheritance and permission checking across the entire application, ensuring both security and maintainability.
+These patterns provide a solid foundation for scalable role inheritance and permission checking across the entire application, ensuring both security and maintainability while supporting the growth of the platform's operational requirements.

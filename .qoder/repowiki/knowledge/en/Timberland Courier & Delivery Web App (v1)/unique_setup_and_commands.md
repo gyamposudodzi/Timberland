@@ -1,0 +1,1 @@
+Requires a running PostgreSQL instance exposed via `DATABASE_URL` (see `.env.example`); boot the DB stack with `docker-compose up`; database lifecycle uses `pnpm db:migrate` / `db:deploy` / `db:seed` / `db:reset`; build runs `prisma generate && next build`; E2E suite runs via `pnpm test:e2e` (Playwright).

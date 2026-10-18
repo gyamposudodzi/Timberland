@@ -73,6 +73,19 @@ async function main() {
     },
   });
 
+  // Dedicated account for the password-reset e2e (no other test logs in here).
+  const resetHash = await bcrypt.hash("reset1234", 12);
+  await prisma.user.create({
+    data: {
+      email: "reset@timberland.example",
+      name: "Reset Target",
+      phone: "+1 555 0002",
+      passwordHash: resetHash,
+      role: "CUSTOMER",
+      emailVerified: true,
+    },
+  });
+
   const sender = await prisma.address.create({
     data: { userId: demo.id, label: "Home", contactName: "Demo Customer", phone: "+1 555 0100", line1: "12 Orchard Lane", city: "Portland", region: "OR", postalCode: "11201", country: "US", zoneId: metro.id },
   });

@@ -1,0 +1,6 @@
+- Server-side mutations are implemented as `"use server"` functions in `server/*.actions.ts` that return a typed `{ ok, error }` result object rather than throwing.
+- Database access goes through the shared `prisma` singleton exported from `lib/db.ts`, which caches a single `PrismaClient` instance across hot-reloads in development.
+- Authentication state is propagated to the client by augmenting the JWT/session in `lib/auth.config.ts` with `id` and `role` fields, then checked via the `authorized` callback guarding `/account/*` routes.
+- All user input is validated with Zod schemas defined in `lib/validation.ts` before being passed to Prisma or business logic.
+- Domain-specific business rules (pricing, rate limiting, rating, tracking-number generation, zone matching) live in `lib/*.ts` so they can be imported by both server actions and unit tests without touching the framework.
+- Public-facing tracking is decoupled from authentication: the `track` route reads `TrackingEvent` records filtered by `isPublic` and `shipmentId`, allowing guest lookup without a session.

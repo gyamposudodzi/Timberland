@@ -29,6 +29,11 @@ export default async function LoginPage({
           </CardHeader>
           <CardContent className="space-y-4">
             <LoginForm authError={authError} />
+            <p className="text-right text-sm">
+              <Link href="/forgot-password" className="text-muted-foreground hover:text-foreground hover:underline">
+                Forgot password?
+              </Link>
+            </p>
             <p className="text-center text-sm text-muted-foreground">
               New to Timberland?{" "}
               <Link href="/signup" className="font-medium text-primary hover:underline">

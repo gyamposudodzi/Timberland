@@ -18,11 +18,12 @@
 
 ## Update Summary
 **Changes Made**
-- Added advanced form component for advancing shipments through validated state machine
-- Enhanced status management with public and internal event visibility controls
-- Integrated operator workflow with role-based access control
-- Added internal note functionality separate from status advancement
-- Updated architecture diagrams to reflect new form components and validation flow
+- Enhanced state machine validation with comprehensive transition rules and terminal state handling
+- Implemented transaction-safe operations for atomic status updates and event creation
+- Integrated robust notification system with user preference handling and delivery logging
+- Added dual visibility support for public tracking events and internal operational notes
+- Developed advanced form components with real-time validation and terminal state detection
+- Strengthened operator workflow with role-based access control and comprehensive audit trails
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -38,18 +39,18 @@
 11. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains the enhanced shipment status management system, including the complete lifecycle from CREATED to DELIVERED, all valid states and transitions, business constraints, audit trails, public visibility controls, and integration with the notification system. The system now features advanced form components that allow operators to advance shipments through a validated state machine while supporting both public and internal event visibility. It is intended for developers, operators, and product stakeholders who need a clear understanding of how shipments move through the system and how that movement is recorded and communicated.
+This document explains the enhanced shipment status management system, featuring a robust state machine with comprehensive validation, transaction safety, and integrated notification capabilities. The system manages the complete lifecycle from CREATED to DELIVERED, supporting all valid states and transitions while maintaining strict business constraints. It provides dual visibility controls for both public customer-facing tracking events and internal operational notes, ensuring appropriate information exposure across different user contexts. The architecture emphasizes transaction safety, audit trail integrity, and seamless integration with the notification system for meaningful updates.
 
 ## Project Structure
-The enhanced status management logic is implemented across focused modules with advanced form components:
-- A state machine module defines statuses, allowed transitions, terminal/completed helpers, and human-readable metadata.
-- Advanced form components provide operator interfaces for status advancement and internal notes.
-- Server actions handle validated state transitions with role-based access control.
-- Database schema defines ShipmentStatus enum and tracking-related tables with visibility flags.
-- Operator service provides read helpers with staff/admin role enforcement.
-- Public tracking service builds guest-safe public views and computes progress.
-- Notification pipeline sends emails based on user preferences and logs outcomes.
-- Tests assert transition rules and metadata completeness.
+The enhanced status management system is implemented across focused modules with sophisticated validation and safety mechanisms:
+- A central state machine module defines statuses, allowed transitions, terminal/completed helpers, and human-readable metadata with comprehensive validation functions.
+- Advanced form components provide operator interfaces with real-time validation against the state machine rules and terminal state detection.
+- Server actions handle validated state transitions within database transactions with role-based access control enforcement.
+- Database schema defines ShipmentStatus enum and tracking-related tables with visibility flags and comprehensive indexing.
+- Operator service provides read helpers with staff/admin role enforcement and comprehensive shipment details including internal events.
+- Public tracking service builds guest-safe public views using only public events with optional verification mechanisms.
+- Notification pipeline sends emails based on user preferences with comprehensive delivery outcome logging.
+- Tests assert transition rules, metadata completeness, and terminal state behavior.
 
 ```mermaid
 graph TB
@@ -117,20 +118,20 @@ TNUM --> ACTIONS
 - [ops shipments page:1-166](file://app/ops/shipments/[id]/page.tsx#L1-L166)
 
 ## Core Components
-- **Shipment state machine**: Defines all statuses, allowed transitions, terminal/completed checks, and display metadata.
-- **Advanced form components**: Provide operator interfaces for status advancement and internal notes with real-time validation.
-- **Database models**: Shipment stores current status; TrackingEvent records each status change with location, note, source, author, and visibility flags.
-- **Operator service**: Provides read helpers with staff/admin role enforcement and comprehensive shipment details.
-- **Public tracking view**: Builds a safe, read-only timeline using only public events and status metadata.
-- **Notification pipeline**: Sends email updates when enabled by user preferences and records delivery outcomes.
-- **Tracking number utilities**: Generate and validate public tracking codes used to access shipment data.
+- **Shipment state machine**: Defines all statuses, allowed transitions, terminal/completed checks, and display metadata with comprehensive validation functions.
+- **Advanced form components**: Provide operator interfaces for status advancement and internal notes with real-time validation and terminal state detection.
+- **Database models**: Shipment stores current status; TrackingEvent records each status change with location, note, source, author, and visibility flags with comprehensive indexing.
+- **Operator service**: Provides read helpers with staff/admin role enforcement and comprehensive shipment details including internal events.
+- **Public tracking view**: Builds a safe, read-only timeline using only public events with optional verification mechanisms and progress computation.
+- **Notification pipeline**: Sends email updates when enabled by user preferences with comprehensive delivery outcome logging.
+- **Tracking number utilities**: Generate and validate public tracking codes used to access shipment data with checksum validation.
 
 Key responsibilities:
-- Enforce valid transitions at the domain layer.
-- Persist both the shipment's current status and an immutable event history.
-- Expose a guest-safe tracking endpoint that filters non-public events.
-- Honor user notification preferences and log every attempt.
-- Provide operator interfaces with role-based access control.
+- Enforce valid transitions at the domain layer with comprehensive validation.
+- Persist both the shipment's current status and an immutable event history within database transactions.
+- Expose a guest-safe tracking endpoint that filters non-public events with optional verification.
+- Honor user notification preferences and log every attempt with detailed outcomes.
+- Provide operator interfaces with role-based access control and terminal state handling.
 
 **Section sources**
 - [shipment-status.ts:9-76](file://lib/shipment-status.ts#L9-L76)
@@ -145,7 +146,7 @@ Key responsibilities:
 - [tracking-number.ts:34-56](file://lib/tracking-number.ts#L34-L56)
 
 ## Architecture Overview
-The enhanced status lifecycle is enforced by a central state machine and applied consistently across server actions, advanced form components, operator workflows, and tests. When a shipment is created, it starts in CREATED and a corresponding tracking event is recorded. Operators can then use the advanced form components to advance shipments through validated state transitions or add internal notes without changing status. Subsequent operations (e.g., confirmation, pickup, transit, delivery) should update the Shipment.status and append a new TrackingEvent with appropriate visibility flags. Notifications are triggered after successful event creation for meaningful updates.
+The enhanced status lifecycle is enforced by a central state machine and applied consistently across server actions, advanced form components, operator workflows, and tests. When a shipment is created, it starts in CREATED and a corresponding tracking event is recorded. Operators can then use the advanced form components to advance shipments through validated state transitions or add internal notes without changing status. Subsequent operations (e.g., confirmation, pickup, transit, delivery) should update the Shipment.status and append a new TrackingEvent with appropriate visibility flags. Notifications are triggered after successful event creation for meaningful updates, with comprehensive delivery outcome logging.
 
 ```mermaid
 sequenceDiagram
@@ -218,12 +219,12 @@ CANCEL --> END
 - [shipment-status.ts:57-60](file://lib/shipment-status.ts#L57-L60)
 
 Business constraints:
-- Transitions must pass validation before being persisted.
-- Terminal statuses cannot advance further.
-- Completed statuses are treated as closed for progress calculations and UI.
+- Transitions must pass validation before being persisted within database transactions.
+- Terminal statuses cannot advance further and trigger terminal state warnings in the UI.
+- Completed statuses are treated as closed for progress calculations and UI rendering.
 
 Validation functions:
-- nextStatuses(from): Returns allowed targets.
+- nextStatuses(from): Returns allowed targets based on the FORWARD mapping.
 - canTransition(from, to): Boolean check against allowed targets.
 - isTerminal(status): Checks if no further moves are allowed.
 - isCompleted(status): Determines if the shipment is effectively closed.
@@ -245,7 +246,7 @@ The database model enforces:
   - source: origin of the event (e.g., CUSTOMER, SYSTEM, OPS).
   - recordedById: optional operator who recorded the event.
 
-Indexes optimize queries by shipmentId and public visibility.
+Indexes optimize queries by shipmentId and public visibility for performance.
 
 ```mermaid
 erDiagram
@@ -284,8 +285,8 @@ SHIPMENT ||--o{ TRACKING_EVENT : "has many"
 - [schema.prisma:209-226](file://prisma/schema.prisma#L209-L226)
 
 Audit trail best practices:
-- Always append a TrackingEvent whenever Shipment.status changes.
-- Record source and recordedById for accountability.
+- Always append a TrackingEvent whenever Shipment.status changes within a database transaction.
+- Record source and recordedById for accountability and operator attribution.
 - Use isPublic=false for internal notes not suitable for guests.
 - Distinguish between status changes (meaningful updates) and internal notes (context only).
 
@@ -295,9 +296,9 @@ Audit trail best practices:
 
 ### Public Visibility Controls
 The public tracking service:
-- Loads only public tracking events (isPublic=true).
-- Normalizes and validates the tracking number input.
-- Optionally verifies access using recipient postal code or name tokens.
+- Loads only public tracking events (isPublic=true) for guest safety.
+- Normalizes and validates the tracking number input with checksum verification.
+- Optionally verifies access using recipient postal code or name tokens for enumeration protection.
 - Computes progress percentage based on status order and special cases for EXCEPTION, DELIVERED, RETURNED, and CANCELLED.
 - Exposes a safe subset of fields without sensitive address or pricing details.
 
@@ -333,19 +334,19 @@ Progress --> Output["Return public tracking data"]
 When a shipment is created, the action:
 - Creates the Shipment with status CREATED.
 - Creates a TrackingEvent with statusCode CREATED and isPublic=true.
-- Fires a notification asynchronously.
+- Fires a notification asynchronously with error handling.
 
 For operator-initiated updates, notifications are triggered only for meaningful updates:
 - Status changes always trigger notifications.
 - Public events (isPublic=true) trigger notifications.
-- Internal notes (isPublic=false, same status) remain silent.
+- Internal notes (isPublic=false, same status) remain silent to avoid unnecessary customer communication.
 
 The notification module:
-- Resolves the shipment and event.
+- Resolves the shipment and event with comprehensive error handling.
 - Reads the user's email preference and enabled event list.
 - Skips sending if preferences do not allow the event, logging SKIPPED.
 - Sends email via configured transport and logs SENT or SKIPPED depending on environment.
-- On failure, logs FAILED with error details.
+- On failure, logs FAILED with error details for debugging.
 
 ```mermaid
 sequenceDiagram
@@ -402,7 +403,7 @@ A typical customer journey:
 
 Progress computation:
 - DELIVERED, RETURNED, CANCELLED yield 100%.
-- EXCEPTION yields a fixed intermediate value.
+- EXCEPTION yields a fixed intermediate value (60%).
 - Other statuses compute a percentage based on their position in the progress order.
 
 **Section sources**
@@ -414,27 +415,27 @@ Progress computation:
 ## Advanced Form Components
 
 ### Advance Status Form
-The `AdvanceStatusForm` component provides a sophisticated interface for operators to advance shipments through the validated state machine:
+The `AdvanceStatusForm` component provides a sophisticated interface for operators to advance shipments through the validated state machine with comprehensive error handling:
 
 **Key Features:**
-- Real-time validation against the state machine rules
-- Dynamic status selection based on allowed transitions
-- Location and note capture for audit trail
-- Public/internal event visibility toggle
-- Automatic page refresh on successful updates
-- Terminal state detection with warning alerts
+- Real-time validation against the state machine rules with client-side and server-side validation.
+- Dynamic status selection based on allowed transitions from the current status.
+- Location and note capture for comprehensive audit trail.
+- Public/internal event visibility toggle with clear labeling.
+- Automatic page refresh on successful updates with revalidation.
+- Terminal state detection with warning alerts and disabled interactions.
 
 **Form Fields:**
-- **New status**: Dropdown populated with allowed transitions from current status
-- **Location**: Optional field for scan/update location
-- **Note**: Textarea with default description from status metadata
-- **Visibility checkbox**: Controls whether event appears on public tracking page
+- **New status**: Dropdown populated with allowed transitions from current status.
+- **Location**: Optional field for scan/update location with placeholder guidance.
+- **Note**: Textarea with default description from status metadata.
+- **Visibility checkbox**: Controls whether event appears on public tracking page.
 
 **Validation Flow:**
-1. Client-side validation ensures only allowed statuses are selectable
-2. Server-side validation re-checks transition rules
-3. Transaction ensures atomic event creation and status update
-4. Conditional notification firing based on meaningful updates
+1. Client-side validation ensures only allowed statuses are selectable.
+2. Server-side validation re-checks transition rules within database transactions.
+3. Transaction ensures atomic event creation and status update.
+4. Conditional notification firing based on meaningful updates (status change or public event).
 
 ```mermaid
 flowchart TD
@@ -463,16 +464,16 @@ Silent --> Refresh
 The `InternalNoteForm` component allows operators to add context without changing shipment status:
 
 **Key Features:**
-- Reuses the same server action but with current status (no-op transition)
-- Forces isPublic=false for internal-only context
-- Maintains consistent UI patterns with status advancement
-- Provides immediate feedback and page refresh
+- Reuses the same server action but with current status (a no-op transition).
+- Forces isPublic=false for internal-only context with clear labeling.
+- Maintains consistent UI patterns with status advancement forms.
+- Provides immediate feedback and automatic page refresh.
 
 **Use Cases:**
-- Recording phone calls with customers
-- Adding operational context for other staff members
-- Documenting exceptions or special handling instructions
-- Creating audit trail entries without affecting customer-facing status
+- Recording phone calls with customers.
+- Adding operational context for other staff members.
+- Documenting exceptions or special handling instructions.
+- Creating audit trail entries without affecting customer-facing status.
 
 **Section sources**
 - [internal-note-form.tsx:13-57](file://components/ops/internal-note-form.tsx#L13-L57)
@@ -481,33 +482,33 @@ The `InternalNoteForm` component allows operators to add context without changin
 ## Operator Workflow Integration
 
 ### Role-Based Access Control
-The operator workflow is protected by role-based access control:
+The operator workflow is protected by comprehensive role-based access control:
 
 **Access Requirements:**
-- Users must have STAFF or ADMIN role
-- Session validation occurs before any status modifications
-- Unauthorized access returns descriptive error messages
+- Users must have STAFF or ADMIN role for full access.
+- Session validation occurs before any status modifications with detailed error handling.
+- Unauthorized access returns descriptive error messages for better UX.
 
 **Security Measures:**
-- Server-side session validation in all operator actions
-- Consistent authorization checks across read and write operations
-- Clear separation between public and operator interfaces
+- Server-side session validation in all operator actions with null checks.
+- Consistent authorization checks across read and write operations.
+- Clear separation between public and operator interfaces with proper routing.
 
 ### Ops Dashboard Integration
-The operator dashboard provides comprehensive shipment management:
+The operator dashboard provides comprehensive shipment management with rich functionality:
 
 **Features:**
-- Paginated shipment listing with filtering capabilities
-- Real-time status counts and summary statistics
-- Full shipment details including internal events
-- Integrated forms for status advancement and internal notes
-- Quick navigation to public tracking view
+- Paginated shipment listing with filtering capabilities and search.
+- Real-time status counts and summary statistics with active/exception metrics.
+- Full shipment details including internal events with operator attribution.
+- Integrated forms for status advancement and internal notes with validation.
+- Quick navigation to public tracking view and back to queue.
 
 **Data Presentation:**
-- Both public and internal events displayed in timeline
-- Internal events marked with "internal" suffix
-- Complete audit trail with operator attribution
-- Rich shipment details including addresses and payment information
+- Both public and internal events displayed in timeline with visual distinction.
+- Internal events marked with "internal" suffix for clear identification.
+- Complete audit trail with operator attribution and timestamps.
+- Rich shipment details including addresses, payment information, and route visualization.
 
 ```mermaid
 flowchart TD
@@ -533,7 +534,7 @@ AddNote --> UpdateTimeline
 - [ops shipments page:16-166](file://app/ops/shipments/[id]/page.tsx#L16-L166)
 
 ## Dependency Analysis
-The enhanced dependency structure shows clear separation between domain logic, form components, and server operations.
+The enhanced dependency structure shows clear separation between domain logic, form components, and server operations with well-defined boundaries.
 
 ```mermaid
 graph LR
@@ -569,7 +570,7 @@ OPSACT --> NOTI
 Coupling and cohesion:
 - The state machine remains cohesive and decoupled from persistence, enabling reuse across server actions, form components, services, and tests.
 - Form components depend on the state machine for validation but are independent of business logic beyond UI concerns.
-- Operator service provides focused read helpers with clear role-based access control.
+- Operator service provides focused read helpers with clear role-based access control and comprehensive data loading.
 - Notifications depend on the state machine for labels and tones but are independent of business logic beyond preference resolution.
 - Public tracking composes status metadata with query results, keeping presentation concerns separate.
 
@@ -577,8 +578,8 @@ Potential circular dependencies:
 - None observed; imports are directional from domain to server layers and UI components.
 
 External integrations:
-- SMTP transport for email notifications.
-- Prisma client for database operations.
+- SMTP transport for email notifications with development fallback.
+- Prisma client for database operations with transaction support.
 - Next.js authentication for role-based access control.
 
 **Section sources**
@@ -594,25 +595,23 @@ External integrations:
 - [tracking-number.ts:1-57](file://lib/tracking-number.ts#L1-L57)
 
 ## Performance Considerations
-- Event writes: Each status change appends a TrackingEvent; ensure indexes on shipmentId and isPublic are leveraged by queries.
+- Event writes: Each status change appends a TrackingEvent within database transactions; ensure indexes on shipmentId and isPublic are leveraged by queries.
 - Notification firing: Notifications are fired asynchronously to avoid blocking request completion; failures are logged rather than failing the primary operation.
-- Public tracking queries: Only public events are loaded, reducing payload size and exposure risk.
-- Progress calculation: Simple arithmetic over a fixed-order array; negligible overhead.
-- Form interactions: Client-side validation reduces unnecessary server round-trips.
-- Operator queries: Optimized pagination and selective field loading for large datasets.
-- Cache invalidation: Strategic revalidation of specific paths after status updates.
-
-[No sources needed since this section provides general guidance]
+- Public tracking queries: Only public events are loaded, reducing payload size and exposure risk with optimized indexing.
+- Progress calculation: Simple arithmetic over a fixed-order array with special case handling; negligible overhead.
+- Form interactions: Client-side validation reduces unnecessary server round-trips with immediate feedback.
+- Operator queries: Optimized pagination and selective field loading for large datasets with comprehensive data inclusion.
+- Cache invalidation: Strategic revalidation of specific paths after status updates for optimal performance.
 
 ## Troubleshooting Guide
 Common issues and resolutions:
 - Invalid transition attempted:
   - Validate using canTransition before updating status.
   - Review FORWARD mapping and ensure business rules align with desired workflow.
-  - Check operator permissions and session validity.
+  - Check operator permissions and session validity with proper error handling.
 - Missing status metadata:
   - Ensure STATUS_META includes label, description, and tone for every status.
-  - Run tests to verify metadata completeness.
+  - Run tests to verify metadata completeness and consistency.
 - Notification not received:
   - Check user's NotificationPreference for EMAIL channel and enabled events.
   - Inspect NotificationLog for SKIPPED or FAILED entries and associated errors.
@@ -624,17 +623,21 @@ Common issues and resolutions:
   - Review PROGRESS_ORDER and computeProgress logic for new statuses.
   - Ensure EXCEPTION and terminal statuses are handled as expected.
 - Operator access denied:
-  - Verify user has STAFF or ADMIN role.
-  - Check session validity and authentication status.
+  - Verify user has STAFF or ADMIN role with proper session validation.
+  - Check session validity and authentication status with detailed error messages.
 - Form validation errors:
-  - Ensure only allowed statuses are presented in dropdown.
+  - Ensure only allowed statuses are presented in dropdown based on current status.
   - Verify server-side transition validation matches client-side logic.
+- Terminal state issues:
+  - Check isTerminal function for proper status classification.
+  - Verify UI displays appropriate warnings for terminal states.
 
 Operational checks:
 - Database indexes on shipmentId and isPublic exist and are used by queries.
 - SMTP configuration is correct; in development, emails may be captured without sending.
 - Operator roles are properly configured in the authentication system.
 - Cache invalidation is working correctly after status updates.
+- Transaction boundaries are properly defined for data consistency.
 
 **Section sources**
 - [shipment-status.ts:45-60](file://lib/shipment-status.ts#L45-L60)
@@ -646,6 +649,4 @@ Operational checks:
 - [schema.prisma:232-260](file://prisma/schema.prisma#L232-L260)
 
 ## Conclusion
-The enhanced shipment status management system centers on a well-defined state machine, robust audit trails via TrackingEvent, and a guest-safe public tracking view. The addition of advanced form components provides operators with intuitive interfaces for managing shipments through validated state transitions while maintaining clear separation between public and internal events. Notifications are integrated thoughtfully, honoring user preferences and recording outcomes. By enforcing transitions at the domain layer and mirroring them in the database schema, form components, and tests, the system ensures consistency, traceability, and extensibility for future status additions and operational needs. The role-based access control and comprehensive operator workflow make the system suitable for complex shipping operations requiring both customer-facing transparency and internal operational flexibility.
-
-[No sources needed since this section summarizes without analyzing specific files]
+The enhanced shipment status management system centers on a well-defined state machine with comprehensive validation, robust audit trails via TrackingEvent, and a guest-safe public tracking view. The addition of advanced form components provides operators with intuitive interfaces for managing shipments through validated state transitions while maintaining clear separation between public and internal events. Transaction safety ensures data consistency, while the notification system integrates thoughtfully, honoring user preferences and recording outcomes comprehensively. By enforcing transitions at the domain layer and mirroring them in the database schema, form components, and tests, the system ensures consistency, traceability, and extensibility for future status additions and operational needs. The role-based access control and comprehensive operator workflow make the system suitable for complex shipping operations requiring both customer-facing transparency and internal operational flexibility.
