@@ -1,1 +1,0 @@
-Prisma data schema and seed for the Timberland courier & delivery platform, defining users, addresses, shipments, parcels, tracking events, pricing zones/rates, and notification preferences/logs against PostgreSQL.

@@ -38,6 +38,11 @@ export async function SiteHeader() {
         <div className="flex items-center gap-2">
           {user ? (
             <>
+              {user.role === "STAFF" || user.role === "ADMIN" ? (
+                <Link href="/ops" className="hidden text-sm text-muted-foreground hover:text-foreground sm:inline">
+                  Ops
+                </Link>
+              ) : null}
               <Link href="/account" className="hidden text-sm text-muted-foreground hover:text-foreground sm:inline">
                 {user.name ?? "Account"}
               </Link>

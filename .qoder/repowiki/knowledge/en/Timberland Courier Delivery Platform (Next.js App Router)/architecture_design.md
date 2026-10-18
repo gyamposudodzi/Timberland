@@ -1,6 +1,0 @@
-The root is a single Next.js App Router application whose children are organized by concern: `app_routes` declares file-system routes, `components` provides shared UI primitives and feature components consumed by those routes, `server_actions` holds server-only actions/services backed by Prisma (`prisma_schema`), and `tests` covers both unit and E2E flows. Cross-child wiring happens at three points:
-- `middleware.ts` wraps NextAuth with an edge-safe matcher on `/account/:path*`, gating the authenticated customer area defined in `app_routes`.
-- `next.config.ts` enables Tailwind v4 via Turbopack for all CSS loaded by components and pages.
-- `tsconfig.json` sets `@/*` path aliasing so every child resolves shared modules from the repo root uniformly.
-- `docker-compose.yml` provisions the PostgreSQL 16 instance that `prisma_schema` migrates against, started alongside the dev server.
-Build/test scripts in `package.json` orchestrate the full pipeline: `prisma generate && next build`, `vitest run`, and `playwright test`.

@@ -1,0 +1,1 @@
+Vitest for unit tests, Playwright (`@playwright/test`) for browser-based E2E tests, Prisma Client used inside Playwright's Node context to query the seeded PostgreSQL database.

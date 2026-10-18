@@ -1,0 +1,1 @@
+File-system routes for the Timberland courier delivery web app, exposing public landing/marketing pages, guest shipment tracking, authenticated account dashboards, and the NextAuth v5 entry point.

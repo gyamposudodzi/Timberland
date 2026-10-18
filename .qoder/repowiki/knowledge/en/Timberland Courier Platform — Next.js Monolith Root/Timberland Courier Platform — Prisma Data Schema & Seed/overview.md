@@ -1,0 +1,1 @@
+Prisma ORM schema and seed script defining the PostgreSQL-backed domain for Timberland's own-fleet courier & delivery platform, covering users, pricing zones/rates, addresses, shipments/parcels/tracking events, and notifications.

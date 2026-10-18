@@ -1,0 +1,5 @@
+Two parallel test suites coexist under `tests/` with a one-way dependency on application source:
+- Unit tests (`pricing.test.ts`, `shipment-status.test.ts`, `tracking-number.test.ts`) import pure functions from `@/lib/*` path aliases and assert behavior using Vitest's `describe`/`it`/`expect` API.
+- E2E tests in `e2e/` use `@playwright/test`; `auth.spec.ts` exports a shared `loginAs(page, email, password)` helper reused by other specs, while `shipping.spec.ts` and `tracking.spec.ts` exercise real routes against a running app.
+- `e2e/helpers.ts` provides a process-scoped cached PrismaClient singleton that queries the seeded PostgreSQL database to obtain real shipments (e.g. a DELIVERED one with recipient PII) so assertions can verify masking and status transitions without hard-coded IDs; it also exposes `closePrisma()` for teardown.
+- Dependency direction is inward: tests depend on `@/lib/*` and, in e2e helpers, on Prisma Client — the application never imports test code.

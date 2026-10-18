@@ -16,7 +16,16 @@
 - [page.tsx (signup)](file://app\signup\page.tsx)
 - [page.tsx (verify)](file://app\verify\page.tsx)
 - [layout.tsx (account)](file://app\account\layout.tsx)
+- [env.ts](file://lib/env.ts)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated to reflect NextAuth.js v5 beta implementation with email/password and Google OAuth providers
+- Added documentation for role-based access control supporting CUSTOMER, STAFF, and ADMIN roles
+- Enhanced provider configuration with conditional Google OAuth support
+- Updated authentication flow diagrams to show the complete JWT-based authentication process
+- Added comprehensive coverage of environment configuration for OAuth providers
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -30,18 +39,19 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains Timberland’s authentication system built with NextAuth.js v5. It covers the JWT-based authentication flow, user role management (Customer, Staff, Admin), session handling, configuration, custom providers, middleware protection, registration and login processes, password hashing with bcryptjs, email verification workflows, protected routes, role-based access control patterns, and security best practices.
+This document explains Timberland's authentication system built with NextAuth.js v5 beta. It covers the JWT-based authentication flow, user role management (Customer, Staff, Admin), session handling, configuration, custom providers including email/password and Google OAuth, middleware protection, registration and login processes, password hashing with bcryptjs, email verification workflows, protected routes, role-based access control patterns, and security best practices.
 
 ## Project Structure
 The authentication implementation is split across:
-- Configuration and runtime setup for NextAuth.js
-- API route handlers
+- Configuration and runtime setup for NextAuth.js v5
+- API route handlers for authentication endpoints
 - Middleware for edge-safe route protection
 - Server actions for registration and login
 - UI components for login and signup forms
 - Pages for login, signup, and email verification
 - Account layout that enforces authenticated access
 - Database schema defining roles and verification fields
+- Environment configuration for OAuth providers
 
 ```mermaid
 graph TB
@@ -49,6 +59,7 @@ subgraph "NextAuth Setup"
 AC["lib/auth.config.ts"]
 A["lib/auth.ts"]
 R["app/api/auth/[...nextauth]/route.ts"]
+E["lib/env.ts"]
 end
 subgraph "Runtime Protection"
 M["middleware.ts"]
@@ -74,6 +85,7 @@ A --> R
 AC --> M
 AC --> A
 A --> TA
+A --> E
 SA --> PR
 SA --> CR
 VP --> PR
@@ -95,6 +107,7 @@ AL --> A
 - [schema.prisma:57-78](file://prisma\schema.prisma#L57-L78)
 - [crypto.ts:1-29](file://lib/crypto.ts#L1-L29)
 - [next-auth.d.ts:1-24](file://types\next-auth.d.ts#L1-L24)
+- [env.ts:53-62](file://lib/env.ts#L53-L62)
 
 **Section sources**
 - [auth.config.ts:1-42](file://lib/auth.config.ts#L1-L42)
@@ -106,6 +119,7 @@ AL --> A
 - [schema.prisma:57-78](file://prisma\schema.prisma#L57-L78)
 - [crypto.ts:1-29](file://lib/crypto.ts#L1-L29)
 - [next-auth.d.ts:1-24](file://types\next-auth.d.ts#L1-L24)
+- [env.ts:53-62](file://lib/env.ts#L53-L62)
 
 ## Core Components
 - NextAuth configuration: Edge-safe config defines JWT session strategy, sign-in pages, provider list, and callbacks for authorization, token augmentation, and session augmentation.
@@ -117,6 +131,7 @@ AL --> A
 - Crypto utilities: bcryptjs-based password hashing and verification; secure random token generation and hashing.
 - Schema: Defines User model with role, verification fields, and relations.
 - UI and pages: Login and signup forms, login page with error mapping, signup page, verify page, and account layout enforcing authentication.
+- Environment configuration: Typed access to environment variables including Google OAuth credentials.
 
 **Section sources**
 - [auth.config.ts:1-42](file://lib/auth.config.ts#L1-L42)
@@ -127,6 +142,7 @@ AL --> A
 - [auth.actions.ts:1-101](file://server\auth.actions.ts#L1-L101)
 - [crypto.ts:1-29](file://lib/crypto.ts#L1-L29)
 - [schema.prisma:57-78](file://prisma\schema.prisma#L57-L78)
+- [env.ts:53-62](file://lib/env.ts#L53-L62)
 
 ## Architecture Overview
 The authentication architecture uses NextAuth.js v5 with a JWT session strategy. The flow integrates server-side credential verification, optional OAuth via Google, and edge-safe middleware protection. Roles are embedded into the JWT and session objects for downstream access control.
@@ -401,6 +417,16 @@ datetime updatedAt
 - [schema.prisma:17-21](file://prisma\schema.prisma#L17-L21)
 - [schema.prisma:57-78](file://prisma\schema.prisma#L57-L78)
 
+### Google OAuth Integration
+- Google OAuth provider is conditionally enabled through environment variables.
+- Requires `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` environment variables.
+- Provider is automatically included when both credentials are configured.
+- Integrates seamlessly with existing JWT session strategy.
+
+**Section sources**
+- [auth.ts:32-34](file://lib/auth.ts#L32-L34)
+- [env.ts:53-62](file://lib/env.ts#L53-L62)
+
 ## Dependency Analysis
 The following diagram shows how authentication-related modules depend on each other.
 
@@ -412,6 +438,7 @@ A --> R["route.ts"]
 A --> T["next-auth.d.ts"]
 A --> P["schema.prisma"]
 A --> C["crypto.ts"]
+A --> E["env.ts"]
 SA["auth.actions.ts"] --> A
 SA --> C
 SA --> P
@@ -431,6 +458,7 @@ AL["account/layout.tsx"] --> A
 - [auth.actions.ts:1-101](file://server\auth.actions.ts#L1-L101)
 - [page.tsx (verify):1-60](file://app\verify\page.tsx#L1-L60)
 - [layout.tsx (account):1-39](file://app/account\layout.tsx#L1-L39)
+- [env.ts:53-62](file://lib/env.ts#L53-L62)
 
 **Section sources**
 - [middleware.ts:1-14](file://middleware.ts#L1-L14)
@@ -443,6 +471,7 @@ AL["account/layout.tsx"] --> A
 - [auth.actions.ts:1-101](file://server\auth.actions.ts#L1-L101)
 - [page.tsx (verify):1-60](file://app\verify\page.tsx#L1-L60)
 - [layout.tsx (account):1-39](file://app/account\layout.tsx#L1-L39)
+- [env.ts:53-62](file://lib/env.ts#L53-L62)
 
 ## Performance Considerations
 - Use JWT sessions to avoid per-request database lookups for session data.
@@ -450,8 +479,7 @@ AL["account/layout.tsx"] --> A
 - Avoid heavy operations in the edge layer; perform Prisma queries and bcrypt operations in Node runtime code.
 - Precompute and cache non-sensitive data where appropriate; do not cache secrets or tokens.
 - Ensure bcrypt rounds are balanced for security and performance (currently set to a moderate value).
-
-[No sources needed since this section provides general guidance]
+- Google OAuth provider is conditionally loaded to minimize startup overhead when not needed.
 
 ## Troubleshooting Guide
 - Invalid credentials: The credentials provider returns a uniform failure without revealing whether the email exists.
@@ -459,6 +487,8 @@ AL["account/layout.tsx"] --> A
 - Missing verification token: Verify page displays a clear message when no token is provided.
 - Expired or invalid token: Verify page fails gracefully and suggests re-signup.
 - Unauthenticated access to protected routes: Middleware redirects to `/login`; account layout also enforces session presence.
+- Google OAuth not working: Check that `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` environment variables are properly configured.
+- OAuth account linking issues: The login page handles OAuth-specific error messages for linked accounts.
 
 **Section sources**
 - [auth.ts:16-23](file://lib/auth.ts#L16-L23)
@@ -466,8 +496,8 @@ AL["account/layout.tsx"] --> A
 - [page.tsx (verify):19-31](file://app\verify\page.tsx#L19-L31)
 - [middleware.ts:10-13](file://middleware.ts#L10-L13)
 - [layout.tsx (account):13-15](file://app/account\layout.tsx#L13-L15)
+- [page.tsx (login):8-12](file://app\login\page.tsx#L8-L12)
+- [env.ts:53-62](file://lib/env.ts#L53-L62)
 
 ## Conclusion
-Timberland’s authentication system leverages NextAuth.js v5 with JWT sessions, bcrypt-based password hashing, and edge-safe middleware. It supports Customer, Staff, and Admin roles, integrates optional Google OAuth, and implements a robust registration and email verification workflow. The design cleanly separates configuration, runtime logic, server actions, and UI, enabling maintainable and secure authentication patterns across the application.
-
-[No sources needed since this section summarizes without analyzing specific files]
+Timberland's authentication system leverages NextAuth.js v5 beta with JWT sessions, bcrypt-based password hashing, and edge-safe middleware. It supports Customer, Staff, and Admin roles, integrates optional Google OAuth, and implements a robust registration and email verification workflow. The design cleanly separates configuration, runtime logic, server actions, and UI, enabling maintainable and secure authentication patterns across the application. The modular architecture allows for easy extension with additional OAuth providers while maintaining consistent role-based access control throughout the platform.

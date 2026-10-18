@@ -1,4 +1,0 @@
-- Shared module imports use the `@/` path alias configured in `tsconfig.json` rather than relative paths.
-- Server-only code (actions, services) is isolated from client bundles using the `server-only` package and placed under `server_actions`.
-- Client-side code uses the `client-only` package to prevent accidental server imports in components.
-- Validation of user input is performed with Zod schemas before being passed into server actions or Prisma mutations.

@@ -18,6 +18,14 @@
 - [tracking-number.ts](file://lib/tracking-number.ts)
 </cite>
 
+## Update Summary
+**Changes Made**
+- Enhanced unit testing section with detailed coverage of pricing calculations, shipment status logic, and tracking number utilities
+- Expanded E2E testing section with comprehensive authentication, shipping workflow, and tracking test scenarios
+- Added detailed mocking strategies and assertion patterns used throughout the test suite
+- Updated CI/CD integration section with specific database seeding and Prisma client generation steps
+- Enhanced troubleshooting guide with specific debugging techniques for both Vitest and Playwright
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Project Structure](#project-structure)
@@ -30,33 +38,33 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains Timberland’s testing strategy, which uses Vitest for unit tests and Playwright for end-to-end (E2E) tests. It covers test organization, naming conventions, patterns, mocking strategies, assertion styles, coverage guidance, CI/CD integration, and debugging techniques. The goal is to help contributors write reliable tests for pricing calculations, shipment status logic, utility functions, and user flows such as authentication, shipment creation, and tracking.
+This document explains Timberland's comprehensive testing strategy, which uses Vitest for unit tests and Playwright for end-to-end (E2E) tests. The testing suite covers critical business logic including pricing calculations, shipment state management, and tracking number generation, while E2E tests validate complete user flows such as authentication, shipment creation, and package tracking. It covers test organization, naming conventions, patterns, mocking strategies, assertion styles, coverage guidance, CI/CD integration, and debugging techniques. The goal is to help contributors write reliable tests that ensure application reliability across all major features.
 
 ## Project Structure
-The repository separates unit tests from E2E tests:
-- Unit tests live under `tests/*.test.ts` and use Vitest.
-- E2E tests live under `tests/e2e/*.spec.ts` and use Playwright.
-- Configuration files define how each runner discovers and executes tests.
+The repository separates unit tests from E2E tests with clear organizational boundaries:
+- Unit tests live under `tests/*.test.ts` and use Vitest for fast, isolated testing of pure functions
+- E2E tests live under `tests/e2e/*.spec.ts` and use Playwright for browser automation against a real Next.js application
+- Configuration files define how each runner discovers and executes tests with appropriate environments
 
 ```mermaid
 graph TB
-subgraph "Unit Tests"
-VT["Vitest config"]
-TP["pricing.test.ts"]
-TS["shipment-status.test.ts"]
-TN["tracking-number.test.ts"]
+subgraph "Unit Tests (Vitest)"
+VT["vitest.config.ts"]
+TP["pricing.test.ts<br/>Pricing calculation tests"]
+TS["shipment-status.test.ts<br/>State machine tests"]
+TN["tracking-number.test.ts<br/>Utility function tests"]
 end
-subgraph "E2E Tests"
-PW["Playwright config"]
-EA["auth.spec.ts"]
-ES["shipping.spec.ts"]
-ET["tracking.spec.ts"]
-EH["helpers.ts"]
+subgraph "E2E Tests (Playwright)"
+PW["playwright.config.ts"]
+EA["auth.spec.ts<br/>Authentication flows"]
+ES["shipping.spec.ts<br/>Shipping workflows"]
+ET["tracking.spec.ts<br/>Tracking functionality"]
+EH["helpers.ts<br/>Database helpers"]
 end
 subgraph "Libraries Under Test"
-LP["lib/pricing.ts"]
-LS["lib/shipment-status.ts"]
-LN["lib/tracking-number.ts"]
+LP["lib/pricing.ts<br/>Quote engine"]
+LS["lib/shipment-status.ts<br/>State machine"]
+LN["lib/tracking-number.ts<br/>Code generator"]
 end
 VT --> TP
 VT --> TS
@@ -80,9 +88,6 @@ ET --> EH
 - [shipping.spec.ts:1-55](file://tests/e2e/shipping.spec.ts#L1-L55)
 - [tracking.spec.ts:1-42](file://tests/e2e/tracking.spec.ts#L1-L42)
 - [helpers.ts:1-49](file://tests/e2e/helpers.ts#L1-L49)
-- [pricing.ts:1-89](file://lib/pricing.ts#L1-L89)
-- [shipment-status.ts:1-77](file://lib/shipment-status.ts#L1-L77)
-- [tracking-number.ts:1-57](file://lib/tracking-number.ts#L1-L57)
 
 **Section sources**
 - [vitest.config.ts:1-15](file://vitest.config.ts#L1-L15)
@@ -90,21 +95,25 @@ ET --> EH
 - [package.json:5-20](file://package.json#L5-L20)
 
 ## Core Components
-This section summarizes the core libraries under test and their responsibilities.
+This section summarizes the core libraries under test and their responsibilities, along with their corresponding test coverage.
 
 - Pricing engine (`lib/pricing.ts`)
-  - Pure functions for quote computation and rounding.
-  - Handles base price, weight/piece charges, service multiplier, minimum price floor, and multi-parcel aggregation.
-  - Exposes `computeQuote` and `round2`.
+  - Pure functions for quote computation and rounding with half-up precision
+  - Handles base price, weight/piece charges, service multiplier, minimum price floor, and multi-parcel aggregation
+  - Exposes `computeQuote` and `round2` functions
+  - **Test Coverage**: Validates summation logic, minimum price enforcement, service multiplier application, multi-parcel aggregation, invalid value handling, and rounding behavior
 
 - Shipment state machine (`lib/shipment-status.ts`)
-  - Defines allowed transitions, terminal states, completion semantics, and metadata for UI rendering.
-  - Exposes helpers like `canTransition`, `nextStatuses`, `isTerminal`, `isCompleted`, plus constants.
+  - Defines allowed transitions, terminal states, completion semantics, and metadata for UI rendering
+  - Implements forward progression, exception recovery, and closed state detection
+  - Exposes helpers like `canTransition`, `nextStatuses`, `isTerminal`, `isCompleted`, plus constants
+  - **Test Coverage**: Verifies happy path transitions, illegal jump rejection, terminal state handling, exception recovery, metadata completeness, and completion semantics
 
 - Tracking number utilities (`lib/tracking-number.ts`)
-  - Generates random, non-sequential codes with a check character.
-  - Normalizes input and validates format.
-  - Supports injectable randomness via options for deterministic tests.
+  - Generates random, non-sequential codes with check characters using Crockford's Base32 alphabet
+  - Normalizes input and validates format with checksum verification
+  - Supports injectable randomness via options for deterministic tests
+  - **Test Coverage**: Ensures valid code generation, tamper detection, normalization handling, and uniqueness across multiple generations
 
 **Section sources**
 - [pricing.ts:1-89](file://lib/pricing.ts#L1-L89)
@@ -112,10 +121,10 @@ This section summarizes the core libraries under test and their responsibilities
 - [tracking-number.ts:1-57](file://lib/tracking-number.ts#L1-L57)
 
 ## Architecture Overview
-The testing architecture consists of two runners:
+The testing architecture consists of two complementary runners with distinct responsibilities:
 
-- Vitest runs unit tests against pure modules without a browser or server.
-- Playwright runs E2E tests against a built Next.js application backed by a seeded PostgreSQL database.
+- Vitest runs unit tests against pure modules without requiring a browser or server environment
+- Playwright runs E2E tests against a built Next.js application backed by a seeded PostgreSQL database with real authentication and data persistence
 
 ```mermaid
 sequenceDiagram
@@ -125,13 +134,13 @@ participant Pw as "Playwright"
 participant App as "Next.js App"
 participant DB as "PostgreSQL"
 Dev->>V : npm test
-V-->>Dev : Unit test results
+V-->>Dev : Fast unit test results
 Dev->>Pw : npm run test : e2e
 Pw->>App : Build + start webServer
 Pw->>DB : Use seeded data
-Pw->>App : Interact via browser
-App->>DB : Read/write data
-Pw-->>Dev : E2E report
+Pw->>App : Interact via Chromium browser
+App->>DB : Read/write real data
+Pw-->>Dev : Comprehensive E2E report
 ```
 
 **Diagram sources**
@@ -148,30 +157,32 @@ Pw-->>Dev : E2E report
 
 ### Unit Testing Strategy with Vitest
 - Discovery and environment
-  - Tests are discovered under `tests/**/*.test.ts`.
-  - Node environment is used; an alias `@` points to the project root.
+  - Tests are discovered under `tests/**/*.test.ts` with Node environment configuration
+  - Path alias `@` points to project root for clean imports
 - Naming conventions
-  - File names end with `.test.ts`.
-  - Group tests using `describe` blocks that mirror module responsibilities.
-  - Individual cases use `it` with descriptive strings.
+  - File names end with `.test.ts` following Vitest conventions
+  - Group tests using `describe` blocks that mirror module responsibilities
+  - Individual cases use `it` with descriptive strings explaining expected behavior
 - Assertion style
-  - Uses Vitest’s `expect` API with exact numeric assertions for pricing and boolean checks for state machine rules.
+  - Uses Vitest's `expect` API with exact numeric assertions for pricing calculations
+  - Boolean checks for state machine rules and validation functions
 - Mocking strategy
-  - Prefer pure functions and dependency injection where possible.
-  - For randomness, inject a custom function via options to make tests deterministic.
+  - Prefer pure functions and dependency injection where possible
+  - For randomness, inject custom functions via options to make tests deterministic
+  - Avoid external dependencies in unit tests for speed and reliability
 
 #### Pricing Calculations
 - What is tested
-  - Summation of zone base, weight, and piece charges.
-  - Minimum price floor enforcement.
-  - Service multiplier application.
-  - Multi-parcel aggregation.
-  - Handling of invalid/non-positive values.
-  - Rounding behavior for half-up precision.
+  - Summation of zone base, weight, and piece charges with proper rounding
+  - Minimum price floor enforcement when calculated totals fall below thresholds
+  - Service multiplier application for different service levels
+  - Multi-parcel aggregation with weight and piece counting
+  - Handling of invalid/non-positive values treated as zero
+  - Rounding behavior for half-up precision without float drift
 - Patterns
-  - Define a base rate fixture once per describe block.
-  - Assert intermediate breakdown fields to ensure internal correctness.
-  - Validate both computed totals and flags indicating whether the minimum price was applied.
+  - Define base rate fixtures once per describe block for reuse
+  - Assert intermediate breakdown fields to ensure internal correctness
+  - Validate both computed totals and flags indicating whether minimum price was applied
 
 ```mermaid
 flowchart TD
@@ -196,15 +207,15 @@ KeepAfter --> End
 
 #### Shipment Status Logic
 - What is tested
-  - Allowed transitions along the happy path.
-  - Rejection of illegal jumps.
-  - Terminal states and recovery from exceptions.
-  - Metadata completeness for all statuses.
-  - Completion semantics for closed states.
+  - Allowed transitions along the happy path from creation to delivery
+  - Rejection of illegal jumps that skip required intermediate states
+  - Terminal states (RETURNED, CANCELLED) and recovery from exceptions
+  - Metadata completeness for all statuses including labels and descriptions
+  - Completion semantics for closed states (DELIVERED, RETURNED, CANCELLED)
 - Patterns
-  - Use explicit transition pairs to assert `canTransition`.
-  - Iterate over defined statuses to verify metadata presence.
-  - Combine multiple helper functions in one test suite to validate the entire state machine contract.
+  - Use explicit transition pairs to assert `canTransition` behavior
+  - Iterate over defined statuses to verify metadata presence and validity
+  - Combine multiple helper functions in one test suite to validate entire state machine contract
 
 ```mermaid
 stateDiagram-v2
@@ -243,15 +254,15 @@ CANCELLED --> [*]
 
 #### Tracking Number Utilities
 - What is tested
-  - Generation produces valid, well-formed codes.
-  - Tampered codes are rejected.
-  - Normalization handles case and separators.
-  - Generated codes vary sufficiently to resist enumeration.
+  - Generation produces valid, well-formed codes with correct length and prefix
+  - Tampered codes are rejected through checksum validation
+  - Normalization handles case conversion and separator removal
+  - Generated codes vary sufficiently to resist enumeration attacks
 - Patterns
-  - Loop generation to assert length, prefix, and validity.
-  - Mutate a generated code to assert validation rejects tampering.
-  - Normalize mixed-case and spaced inputs to canonical form.
-  - Use a set to measure uniqueness across many generations.
+  - Loop generation to assert length, prefix, and validity across multiple iterations
+  - Mutate generated codes to assert validation rejects tampering attempts
+  - Normalize mixed-case and spaced inputs to canonical form
+  - Use sets to measure uniqueness across many generations ensuring randomness
 
 ```mermaid
 flowchart TD
@@ -276,16 +287,17 @@ VerifyCheck --> |Yes| True["Return true"]
 
 ### E2E Testing Strategy with Playwright
 - Discovery and execution
-  - Tests live under `tests/e2e`.
-  - A single Chromium project is configured.
-  - The web server is started automatically by Playwright during tests.
+  - Tests live under `tests/e2e` with single Chromium project configuration
+  - Web server is started automatically by Playwright during test execution
+  - Single worker mode to reduce contention on shared database resources
 - Environment and data
-  - Tests run against a real built app and a seeded PostgreSQL database.
-  - Helpers query the database to obtain real tracking numbers and PII for masking assertions.
+  - Tests run against a real built app and seeded PostgreSQL database
+  - Helpers query the database to obtain real tracking numbers and PII for masking assertions
+  - Database connection managed through cached PrismaClient instance
 - User flow coverage
-  - Authentication: login success/failure, route guards, logout.
-  - Shipment creation: authenticated flow, redirect, dashboard listing, and guest visibility constraints.
-  - Tracking: public status/timeline display, PII masking, not-found handling, and home bar navigation.
+  - Authentication: login success/failure, route guards, logout functionality
+  - Shipment creation: authenticated flow, redirect handling, dashboard listing, guest visibility constraints
+  - Tracking: public status/timeline display, PII masking, not-found handling, home bar navigation
 
 ```mermaid
 sequenceDiagram
@@ -322,7 +334,7 @@ App-->>Browser : Render masked view
 - [playwright.config.ts:1-32](file://playwright.config.ts#L1-L32)
 
 ## Dependency Analysis
-The following diagram shows how tests depend on libraries and configuration.
+The following diagram shows how tests depend on libraries and configuration, demonstrating the clear separation between unit and E2E testing concerns.
 
 ```mermaid
 graph LR
@@ -336,6 +348,7 @@ PT --> LP["lib/pricing.ts"]
 ST --> LS["lib/shipment-status.ts"]
 TT --> LN["lib/tracking-number.ts"]
 ET --> EH["tests/e2e/helpers.ts"]
+EH --> PRISMA["@prisma/client"]
 ```
 
 **Diagram sources**
@@ -348,9 +361,6 @@ ET --> EH["tests/e2e/helpers.ts"]
 - [shipping.spec.ts:1-55](file://tests/e2e/shipping.spec.ts#L1-L55)
 - [tracking.spec.ts:1-42](file://tests/e2e/tracking.spec.ts#L1-L42)
 - [helpers.ts:1-49](file://tests/e2e/helpers.ts#L1-L49)
-- [pricing.ts:1-89](file://lib/pricing.ts#L1-L89)
-- [shipment-status.ts:1-77](file://lib/shipment-status.ts#L1-L77)
-- [tracking-number.ts:1-57](file://lib/tracking-number.ts#L1-L57)
 
 **Section sources**
 - [vitest.config.ts:1-15](file://vitest.config.ts#L1-L15)
@@ -358,13 +368,15 @@ ET --> EH["tests/e2e/helpers.ts"]
 
 ## Performance Considerations
 - Unit tests
-  - Keep fixtures small and reuse them within a describe block.
-  - Avoid heavy computations inside loops; precompute when possible.
-  - Prefer deterministic helpers (like injected randomness) to avoid flakiness.
+  - Keep fixtures small and reuse them within describe blocks for efficiency
+  - Avoid heavy computations inside loops; precompute values when possible
+  - Prefer deterministic helpers (like injected randomness) to avoid flakiness and improve speed
+  - Run tests in parallel naturally since they're isolated and don't share state
 - E2E tests
-  - Run a single worker to reduce contention on the shared database.
-  - Use seeded data to minimize setup time and stabilize outcomes.
-  - Limit screenshots and traces to failures or retries to keep reports manageable.
+  - Run a single worker to reduce contention on the shared database
+  - Use seeded data to minimize setup time and stabilize outcomes
+  - Limit screenshots and traces to failures or retries to keep reports manageable
+  - Cache database connections through PrismaClient singleton pattern
 
 [No sources needed since this section provides general guidance]
 
@@ -373,22 +385,24 @@ ET --> EH["tests/e2e/helpers.ts"]
 ### Running Tests Locally
 - Unit tests
   - Run all unit tests: `npm test`
-  - Watch mode: `npm run test:watch`
+  - Watch mode for development: `npm run test:watch`
 - E2E tests
   - Run E2E tests: `npm run test:e2e`
-  - Open Playwright UI: `npm run test:e2e:ui`
+  - Open Playwright UI for interactive debugging: `npm run test:e2e:ui`
 
 **Section sources**
 - [package.json:5-20](file://package.json#L5-L20)
 
 ### Common Issues and Fixes
 - Missing Prisma client
-  - Ensure Prisma client is generated before running tests.
-  - In CI, this is done explicitly; locally, run the generation step if you see client-related errors.
+  - Ensure Prisma client is generated before running tests
+  - In CI, this is done explicitly; locally, run `npx prisma generate` if you see client-related errors
 - Database not seeded
-  - E2E tests rely on seeded data. If helpers cannot find expected records, seed the database first.
+  - E2E tests rely on seeded data. If helpers cannot find expected records, seed the database first with `npm run db:seed`
 - Browser or dependencies missing
-  - Install Playwright browsers with dependencies before running E2E tests.
+  - Install Playwright browsers with system dependencies before running E2E tests: `npx playwright install --with-deps chromium`
+- Port conflicts
+  - Ensure port 3000 is available or configure alternative port in environment variables
 
 **Section sources**
 - [ci.yml:28-30](file://.github/workflows/ci.yml#L28-L30)
@@ -397,22 +411,27 @@ ET --> EH["tests/e2e/helpers.ts"]
 
 ### Debugging Failing Tests
 - Unit tests
-  - Inspect console logs and assertion messages.
-  - Isolate failing cases by running a specific file or test name.
+  - Inspect console logs and assertion messages for detailed error information
+  - Isolate failing cases by running specific files: `npm test -- tests/pricing.test.ts`
+  - Use watch mode to iterate quickly on fixes
 - E2E tests
-  - Playwright captures screenshots on failure and traces on retry.
-  - Use the HTML report to inspect steps and network activity.
-  - Run tests in UI mode to interactively debug selectors and flows.
+  - Playwright captures screenshots on failure and traces on retry automatically
+  - Use HTML report to inspect steps and network activity: `npx playwright show-report`
+  - Run tests in UI mode to interactively debug selectors and flows: `npm run test:e2e:ui`
+  - Add strategic pauses with `await page.pause()` for manual inspection
 
 **Section sources**
 - [playwright.config.ts:17-23](file://playwright.config.ts#L17-L23)
 
 ### CI/CD Integration
 - Quality job
-  - Installs dependencies, generates Prisma client, typechecks, lints, and runs unit tests.
+  - Installs dependencies, generates Prisma client, typechecks, lints, and runs unit tests
+  - Runs on Ubuntu latest with Node.js 22 and npm caching
 - E2E job
-  - Starts a PostgreSQL service, applies migrations, seeds data, builds the app, installs Playwright browsers, and runs E2E tests.
-  - Uploads the Playwright report on failure.
+  - Starts PostgreSQL service container with health checks
+  - Applies migrations and seeds data before building the application
+  - Installs Playwright browsers with system dependencies
+  - Runs E2E tests and uploads HTML report on failure for 7 days retention
 
 ```mermaid
 flowchart TD
@@ -421,12 +440,12 @@ Quality --> Typecheck["Typecheck"]
 Quality --> Lint["Lint"]
 Quality --> UnitTests["Unit Tests"]
 UnitTests --> E2EJob["E2E Job"]
-E2EJob --> SetupDB["Setup PostgreSQL"]
-SetupDB --> MigrateSeed["Migrate & Seed"]
-MigrateSeed --> Build["Build App"]
+E2EJob --> SetupDB["Setup PostgreSQL Service"]
+SetupDB --> MigrateSeed["Apply Migrations & Seed Data"]
+MigrateSeed --> Build["Build Next.js App"]
 Build --> InstallPW["Install Playwright Browsers"]
 InstallPW --> RunE2E["Run E2E Tests"]
-RunE2E --> Report["Upload Report on Failure"]
+RunE2E --> Report["Upload HTML Report on Failure"]
 ```
 
 **Diagram sources**
@@ -438,4 +457,4 @@ RunE2E --> Report["Upload Report on Failure"]
 - [ci.yml:40-94](file://.github/workflows/ci.yml#L40-L94)
 
 ## Conclusion
-Timberland’s testing strategy combines fast, isolated unit tests with robust E2E scenarios. Unit tests focus on pure business logic—pricing, state transitions, and utility functions—while E2E tests validate critical user journeys across authentication, shipment creation, and tracking. The configuration and CI pipeline ensure consistent execution, meaningful reporting, and stable outcomes. By following the patterns and guidelines outlined here, contributors can extend coverage confidently and maintain high reliability across the application.
+Timberland's comprehensive testing strategy combines fast, isolated unit tests with robust E2E scenarios to ensure application reliability. Unit tests focus on pure business logic—pricing calculations, state transitions, and utility functions—while E2E tests validate critical user journeys across authentication, shipment creation, and tracking. The testing architecture leverages Vitest for rapid feedback on core algorithms and Playwright for realistic user interaction testing against a real database and application stack. The configuration and CI pipeline ensure consistent execution, meaningful reporting, and stable outcomes across development and production environments. By following the patterns and guidelines outlined here, contributors can extend coverage confidently and maintain high reliability across all application features.

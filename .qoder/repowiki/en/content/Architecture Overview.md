@@ -13,6 +13,8 @@
 - [server/auth.actions.ts](file://server/auth.actions.ts)
 - [server/shipment.actions.ts](file://server/shipment.actions.ts)
 - [server/quote.actions.ts](file://server/quote.actions.ts)
+- [server/account.service.ts](file://server/account.service.ts)
+- [server/ops.service.ts](file://server/ops.service.ts)
 - [lib/rating.ts](file://lib/rating.ts)
 - [lib/pricing.ts](file://lib/pricing.ts)
 - [lib/zones.ts](file://lib/zones.ts)
@@ -22,8 +24,18 @@
 - [server/tracking.service.ts](file://server/tracking.service.ts)
 - [prisma/schema.prisma](file://prisma/schema.prisma)
 - [lib/db.ts](file://lib/db.ts)
-- [app/account/layout.tsx](file://app/account/layout.tsx)
+- [app/account/page.tsx](file://app/account/page.tsx)
+- [components/shipment/new-shipment-form.tsx](file://components/shipment/new-shipment-form.tsx)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated to reflect comprehensive Next.js App Router architecture with modern component patterns
+- Enhanced server actions and service layer organization documentation
+- Added detailed analysis of the layered architecture with clear separation between presentation, business logic, and data access layers
+- Updated diagrams to show modern React component patterns and server action flows
+- Expanded coverage of authentication flow with edge-safe middleware and JWT sessions
+- Enhanced pricing engine integration documentation with quote calculation flows
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -39,14 +51,15 @@
 11. [Conclusion](#conclusion)
 
 ## Introduction
-This document describes Timberland’s full-stack architecture, built with Next.js App Router, React components, and server actions. The system follows a layered architecture pattern that separates presentation (pages and UI components), business logic (pricing engine, tracking service, notification orchestration), and data access (Prisma ORM over PostgreSQL). It integrates authentication via NextAuth, supports shipment management, pricing estimation, and email notifications.
+This document describes Timberland's full-stack architecture, built with Next.js 16 App Router, modern React components, and server actions. The system follows a comprehensive layered architecture pattern that separates presentation (pages and UI components), business logic (pricing engine, tracking service, notification orchestration), and data access (Prisma ORM over PostgreSQL). It integrates authentication via NextAuth with edge-safe middleware, supports shipment management, pricing estimation, and email notifications.
 
 Key technologies:
-- Next.js 16 with App Router
-- TypeScript
-- Prisma ORM
-- PostgreSQL
-- Tailwind CSS v4 via Turbopack
+- Next.js 16 with App Router and Turbopack
+- TypeScript for type safety
+- Prisma ORM for database access
+- PostgreSQL as the primary database
+- Tailwind CSS v4 for styling
+- NextAuth for authentication with JWT strategy
 
 The application exposes public pages for quoting and tracking, and protected customer areas for managing shipments and preferences. Server actions encapsulate mutations and orchestrate cross-cutting concerns such as validation, authorization, pricing, persistence, and notifications.
 
@@ -56,25 +69,25 @@ The application exposes public pages for quoting and tracking, and protected cus
 - [README.md:1-1](file://README.md#L1-L1)
 
 ## Project Structure
-The repository is organized by feature and layer:
+The repository is organized by feature and layer using Next.js App Router conventions:
 - app/: Next.js routes and layouts; includes account dashboard, quote, track, login/signup, and API route for NextAuth.
 - components/: Reusable React components grouped by domain (account, auth, layout, quote, shipment, tracking, ui).
 - lib/: Shared utilities and services (auth config, database client, crypto, environment, notifications, pricing engine, zones, validation).
-- server/: Server actions and services handling business logic and data operations.
+- server/: Server actions and services handling business logic and data operations with clear separation of concerns.
 - prisma/: Database schema, migrations, and seed script.
 - tests/: Unit and E2E tests.
 
 ```mermaid
 graph TB
-subgraph "Presentation"
+subgraph "Presentation Layer"
 APP_LAYOUT["Root Layout<br/>app/layout.tsx"]
-ACCOUNT_LAYOUT["Account Layout<br/>app/account/layout.tsx"]
-PAGES["Pages & Routes<br/>app/*"]
+ACCOUNT_PAGE["Account Dashboard<br/>app/account/page.tsx"]
 COMPONENTS["UI & Domain Components<br/>components/*"]
+FORMS["Form Components<br/>components/shipment/new-shipment-form.tsx"]
 end
 subgraph "Server Layer"
 ACTIONS["Server Actions<br/>server/*.actions.ts"]
-SERVICES["Services<br/>server/tracking.service.ts"]
+SERVICES["Services<br/>server/*.service.ts"]
 AUTH_CONFIG["Auth Config<br/>lib/auth.config.ts"]
 AUTH_RUNTIME["Auth Runtime<br/>lib/auth.ts"]
 end
@@ -85,13 +98,15 @@ ZONES["Zone Mapping<br/>lib/zones.ts"]
 TRACKING_NUM["Tracking Number Utils<br/>lib/tracking-number.ts"]
 NOTIFICATIONS["Notifications<br/>lib/notifications.ts"]
 end
-subgraph "Data Access"
+subgraph "Data Access Layer"
 DB_CLIENT["Prisma Client<br/>lib/db.ts"]
 SCHEMA["Schema & Models<br/>prisma/schema.prisma"]
 POSTGRES["PostgreSQL"]
 end
-PAGES --> COMPONENTS
-PAGES --> ACTIONS
+APP_LAYOUT --> ACCOUNT_PAGE
+ACCOUNT_PAGE --> COMPONENTS
+COMPONENTS --> FORMS
+FORMS --> ACTIONS
 ACTIONS --> AUTH_RUNTIME
 ACTIONS --> RATING
 ACTIONS --> NOTIFICATIONS
@@ -100,24 +115,22 @@ RATING --> DB_CLIENT
 AUTH_RUNTIME --> DB_CLIENT
 DB_CLIENT --> SCHEMA
 SCHEMA --> POSTGRES
-APP_LAYOUT --> PAGES
-ACCOUNT_LAYOUT --> PAGES
 ```
 
 **Diagram sources**
 - [app/layout.tsx:1-31](file://app/layout.tsx#L1-L31)
-- [app/account/layout.tsx:1-39](file://app/account/layout.tsx#L1-L39)
+- [app/account/page.tsx:1-98](file://app/account/page.tsx#L1-L98)
+- [components/shipment/new-shipment-form.tsx:1-257](file://components/shipment/new-shipment-form.tsx#L1-L257)
 - [lib/auth.config.ts:1-42](file://lib/auth.config.ts#L1-L42)
 - [lib/auth.ts:1-42](file://lib/auth.ts#L1-L42)
 - [lib/db.ts:1-16](file://lib/db.ts#L1-L16)
 - [prisma/schema.prisma:1-261](file://prisma/schema.prisma#L1-L261)
 - [lib/rating.ts:1-70](file://lib/rating.ts#L1-L70)
 - [lib/notifications.ts:1-114](file://lib/notifications.ts#L1-L114)
-- [server/tracking.service.ts:1-147](file://server/tracking.service.ts#L1-L147)
 
 **Section sources**
 - [app/layout.tsx:1-31](file://app/layout.tsx#L1-L31)
-- [app/account/layout.tsx:1-39](file://app/account/layout.tsx#L1-L39)
+- [app/account/page.tsx:1-98](file://app/account/page.tsx#L1-L98)
 - [package.json:1-59](file://package.json#L1-L59)
 
 ## Core Components
@@ -126,6 +139,8 @@ ACCOUNT_LAYOUT --> PAGES
 - Pricing Engine: Resolves zone and service level, applies rate rules, and computes breakdowns through a pure pricing function.
 - Tracking Service: Builds guest-safe tracking views, computes progress, and filters public events.
 - Notifications: Sends emails on status changes, honors user preferences, and logs outcomes.
+- Account Services: Provides read-only access to user-specific data with proper ownership enforcement.
+- Operations Services: Back-office functionality for staff/admin roles with enhanced query capabilities.
 
 **Section sources**
 - [middleware.ts:1-14](file://middleware.ts#L1-L14)
@@ -135,9 +150,11 @@ ACCOUNT_LAYOUT --> PAGES
 - [lib/rating.ts:1-70](file://lib/rating.ts#L1-L70)
 - [server/tracking.service.ts:1-147](file://server/tracking.service.ts#L1-L147)
 - [lib/notifications.ts:1-114](file://lib/notifications.ts#L1-L114)
+- [server/account.service.ts:1-52](file://server/account.service.ts#L1-L52)
+- [server/ops.service.ts:1-70](file://server/ops.service.ts#L1-L70)
 
 ## Architecture Overview
-Timberland uses a layered architecture:
+Timberland uses a comprehensive layered architecture:
 - Presentation Layer: Next.js pages and React components render the UI and call server actions or read data from server functions.
 - Business Logic Layer: Server actions and services implement use cases (create shipment, estimate quote, track shipment, update preferences).
 - Data Access Layer: Prisma client abstracts PostgreSQL queries and enforces type safety.
@@ -146,7 +163,7 @@ Timberland uses a layered architecture:
 graph TB
 UI["React Pages & Components<br/>app/*, components/*"]
 SA["Server Actions<br/>server/*.actions.ts"]
-SVC["Services<br/>server/tracking.service.ts"]
+SVC["Services<br/>server/*.service.ts"]
 AUTH["Auth Runtime<br/>lib/auth.ts"]
 RATING["Pricing Engine<br/>lib/rating.ts"]
 NOTIF["Notifications<br/>lib/notifications.ts"]
@@ -166,7 +183,8 @@ DB --> PG
 **Diagram sources**
 - [app/layout.tsx:1-31](file://app/layout.tsx#L1-L31)
 - [server/shipment.actions.ts:1-146](file://server/shipment.actions.ts#L1-L146)
-- [server/tracking.service.ts:1-147](file://server/tracking.service.ts#L1-L147)
+- [server/account.service.ts:1-52](file://server/account.service.ts#L1-L52)
+- [server/ops.service.ts:1-70](file://server/ops.service.ts#L1-L70)
 - [lib/auth.ts:1-42](file://lib/auth.ts#L1-L42)
 - [lib/rating.ts:1-70](file://lib/rating.ts#L1-L70)
 - [lib/notifications.ts:1-114](file://lib/notifications.ts#L1-L114)
@@ -202,21 +220,21 @@ AuthAPI-->>Browser : Redirect to /account
 - [lib/auth.config.ts:1-42](file://lib/auth.config.ts#L1-L42)
 - [lib/auth.ts:1-42](file://lib/auth.ts#L1-L42)
 - [lib/db.ts:1-16](file://lib/db.ts#L1-L16)
-- [app/account/layout.tsx:1-39](file://app/account/layout.tsx#L1-L39)
+- [app/account/page.tsx:1-98](file://app/account/page.tsx#L1-L98)
 
 **Section sources**
 - [middleware.ts:1-14](file://middleware.ts#L1-L14)
 - [lib/auth.config.ts:1-42](file://lib/auth.config.ts#L1-L42)
 - [lib/auth.ts:1-42](file://lib/auth.ts#L1-L42)
 - [app/api/auth/[...nextauth]/route.ts:1-4](file://app/api/auth/[...nextauth]/route.ts#L1-L4)
-- [app/account/layout.tsx:1-39](file://app/account/layout.tsx#L1-L39)
+- [app/account/page.tsx:1-98](file://app/account/page.tsx#L1-L98)
 
 ### Shipment Creation Flow
 Shipment creation validates inputs, checks authorization, estimates pricing, persists addresses and parcels, generates a unique tracking number, records initial tracking event, and sends a confirmation notification.
 
 ```mermaid
 sequenceDiagram
-participant UI as "New Shipment Form"
+participant UI as "New Shipment Form<br/>components/shipment/new-shipment-form.tsx"
 participant Action as "createShipmentAction<br/>server/shipment.actions.ts"
 participant Auth as "auth()<br/>lib/auth.ts"
 participant Rating as "estimateQuote<br/>lib/rating.ts"
@@ -237,12 +255,14 @@ Action-->>UI : { ok, trackingNumber, shipmentId }
 ```
 
 **Diagram sources**
+- [components/shipment/new-shipment-form.tsx:1-257](file://components/shipment/new-shipment-form.tsx#L1-L257)
 - [server/shipment.actions.ts:1-146](file://server/shipment.actions.ts#L1-L146)
 - [lib/rating.ts:1-70](file://lib/rating.ts#L1-L70)
 - [lib/db.ts:1-16](file://lib/db.ts#L1-L16)
 - [lib/notifications.ts:1-114](file://lib/notifications.ts#L1-L114)
 
 **Section sources**
+- [components/shipment/new-shipment-form.tsx:1-257](file://components/shipment/new-shipment-form.tsx#L1-L257)
 - [server/shipment.actions.ts:1-146](file://server/shipment.actions.ts#L1-L146)
 
 ### Pricing Engine Integration
@@ -365,7 +385,8 @@ Schema --> Postgres["PostgreSQL"]
 **Diagram sources**
 - [app/layout.tsx:1-31](file://app/layout.tsx#L1-L31)
 - [server/shipment.actions.ts:1-146](file://server/shipment.actions.ts#L1-L146)
-- [server/tracking.service.ts:1-147](file://server/tracking.service.ts#L1-L147)
+- [server/account.service.ts:1-52](file://server/account.service.ts#L1-L52)
+- [server/ops.service.ts:1-70](file://server/ops.service.ts#L1-L70)
 - [lib/auth.ts:1-42](file://lib/auth.ts#L1-L42)
 - [lib/rating.ts:1-70](file://lib/rating.ts#L1-L70)
 - [lib/notifications.ts:1-114](file://lib/notifications.ts#L1-L114)
@@ -374,7 +395,8 @@ Schema --> Postgres["PostgreSQL"]
 
 **Section sources**
 - [server/shipment.actions.ts:1-146](file://server/shipment.actions.ts#L1-L146)
-- [server/tracking.service.ts:1-147](file://server/tracking.service.ts#L1-L147)
+- [server/account.service.ts:1-52](file://server/account.service.ts#L1-L52)
+- [server/ops.service.ts:1-70](file://server/ops.service.ts#L1-L70)
 - [lib/rating.ts:1-70](file://lib/rating.ts#L1-L70)
 - [lib/notifications.ts:1-114](file://lib/notifications.ts#L1-L114)
 - [lib/db.ts:1-16](file://lib/db.ts#L1-L16)
@@ -385,8 +407,13 @@ Schema --> Postgres["PostgreSQL"]
 - Tailwind v4 via Turbopack: CSS processing optimized for faster builds and dev experience.
 - Minimal payload exposure: Tracking service returns only public fields, reducing response size and sensitive data leakage.
 - Fire-and-forget notifications: Non-blocking email dispatch prevents request latency spikes.
+- Server-side rendering: Next.js App Router enables efficient data fetching and reduced client-side JavaScript.
+- Component optimization: Modern React patterns with hooks like useMemo and useTransition for better performance.
 
-[No sources needed since this section provides general guidance]
+**Section sources**
+- [lib/db.ts:1-16](file://lib/db.ts#L1-L16)
+- [next.config.ts:1-16](file://next.config.ts#L1-L16)
+- [components/shipment/new-shipment-form.tsx:1-257](file://components/shipment/new-shipment-form.tsx#L1-L257)
 
 ## Security Considerations
 - Edge-safe middleware: Protects /account routes without importing Node-only modules.
@@ -395,6 +422,8 @@ Schema --> Postgres["PostgreSQL"]
 - Token handling: Verification tokens are hashed before persistence.
 - Guest-safe tracking: Optional verification parameter resists enumeration attacks.
 - Environment gating: Email sending is disabled in development unless configured.
+- Role-based access control: Staff/admin roles enforced in operations services.
+- Input validation: Zod schemas validate all user inputs at multiple layers.
 
 **Section sources**
 - [middleware.ts:1-14](file://middleware.ts#L1-L14)
@@ -402,14 +431,22 @@ Schema --> Postgres["PostgreSQL"]
 - [server/auth.actions.ts:46-76](file://server/auth.actions.ts#L46-L76)
 - [server/tracking.service.ts:56-62](file://server/tracking.service.ts#L56-L62)
 - [lib/notifications.ts:10-24](file://lib/notifications.ts#L10-L24)
+- [server/ops.service.ts:11-19](file://server/ops.service.ts#L11-L19)
 
 ## Scalability Approaches
 - Stateless sessions: JWT-based sessions enable horizontal scaling without shared session stores.
 - Separation of concerns: Pure pricing computation allows caching or offloading to dedicated services.
 - Async notifications: Decoupled email delivery improves throughput under load.
 - Indexes and queries: Prisma schema includes indexes on frequently queried fields (e.g., userId, status, createdAt, shipmentId).
+- Service layer abstraction: Clear separation between server actions and services enables independent scaling.
+- Connection pooling: Singleton PrismaClient instance optimizes database connections.
 
-[No sources needed since this section provides general guidance]
+**Section sources**
+- [lib/auth.config.ts:12-12](file://lib/auth.config.ts#L12-L12)
+- [lib/rating.ts:1-70](file://lib/rating.ts#L1-L70)
+- [lib/notifications.ts:1-114](file://lib/notifications.ts#L1-L114)
+- [prisma/schema.prisma:77-77](file://prisma/schema.prisma#L77-L77)
+- [lib/db.ts:3-15](file://lib/db.ts#L3-L15)
 
 ## Troubleshooting Guide
 - Cannot create shipment:
@@ -425,12 +462,19 @@ Schema --> Postgres["PostgreSQL"]
 - Notifications not sent:
   - Check SMTP configuration and emailEnabled flag.
   - Review notification logs for SKIPPED or FAILED statuses.
+- Authentication issues:
+  - Verify edge middleware configuration and matcher patterns.
+  - Check JWT token validity and session configuration.
+- Performance problems:
+  - Monitor database connection usage and query performance.
+  - Check for unnecessary re-renders in React components.
 
 **Section sources**
 - [server/shipment.actions.ts:45-146](file://server/shipment.actions.ts#L45-L146)
 - [lib/rating.ts:19-60](file://lib/rating.ts#L19-L60)
 - [server/tracking.service.ts:69-147](file://server/tracking.service.ts#L69-L147)
 - [lib/notifications.ts:49-114](file://lib/notifications.ts#L49-L114)
+- [middleware.ts:10-13](file://middleware.ts#L10-L13)
 
 ## Conclusion
-Timberland’s architecture cleanly separates presentation, business logic, and data access layers while leveraging Next.js App Router, server actions, and Prisma. Authentication is secured with edge-safe middleware and JWT sessions. The pricing engine and tracking service provide robust domain capabilities, and the notification system ensures reliable communication with users. With thoughtful security practices, performance optimizations, and scalable patterns, the system is well-positioned for growth and operational reliability.
+Timberland's architecture cleanly separates presentation, business logic, and data access layers while leveraging Next.js App Router, server actions, and Prisma. Authentication is secured with edge-safe middleware and JWT sessions. The pricing engine and tracking service provide robust domain capabilities, and the notification system ensures reliable communication with users. With thoughtful security practices, performance optimizations, and scalable patterns, the system is well-positioned for growth and operational reliability. The comprehensive service layer organization and modern React component patterns provide a solid foundation for future enhancements and maintainability.

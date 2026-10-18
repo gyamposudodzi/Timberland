@@ -1,0 +1,1 @@
+Server-side shared library for Timberland's Next.js app providing auth, database access, validation schemas, pricing engine, shipment state machine, tracking numbers, and email notifications.

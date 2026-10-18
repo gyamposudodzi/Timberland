@@ -40,6 +40,13 @@ export async function findDeliveredShipment(): Promise<SeededShipment> {
   };
 }
 
+/** Returns the id of a shipment currently in the given status (for ops tests). */
+export async function findShipmentIdByStatus(status: "CREATED" | "CONFIRMED" | "DELIVERED"): Promise<string> {
+  const s = await prisma().shipment.findFirst({ where: { status }, orderBy: { createdAt: "asc" }, select: { id: true } });
+  if (!s) throw new Error(`No seed shipment in status ${status} — run \`npm run db:seed\`.`);
+  return s.id;
+}
+
 export async function closePrisma(): Promise<void> {
   if (cached) {
     await cached.$disconnect();

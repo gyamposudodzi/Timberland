@@ -60,6 +60,19 @@ async function main() {
     },
   });
 
+  // Back-office operator (role-gated access to /ops).
+  const opsHash = await bcrypt.hash("ops1234", 12);
+  await prisma.user.create({
+    data: {
+      email: "ops@timberland.example",
+      name: "Ops Staff",
+      phone: "+1 555 0001",
+      passwordHash: opsHash,
+      role: "STAFF",
+      emailVerified: true,
+    },
+  });
+
   const sender = await prisma.address.create({
     data: { userId: demo.id, label: "Home", contactName: "Demo Customer", phone: "+1 555 0100", line1: "12 Orchard Lane", city: "Portland", region: "OR", postalCode: "11201", country: "US", zoneId: metro.id },
   });
@@ -147,6 +160,7 @@ async function main() {
 
   console.log("Seeded Timberland demo data.");
   console.log("  Login:    demo@timberland.example  /  demo1234");
+  console.log("  Ops:      ops@timberland.example   /  ops1234");
   console.log(`  Track A (delivered):        ${tnA}`);
   console.log(`  Track B (out for delivery): ${tnB}`);
   console.log(`  Track C (created):          ${tnC}`);

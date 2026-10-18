@@ -4,6 +4,7 @@
 **Referenced Files in This Document**
 - [schema.prisma](file://prisma/schema.prisma)
 - [shipment.actions.ts](file://server/shipment.actions.ts)
+- [ops.actions.ts](file://server/ops.actions.ts)
 - [new-shipment-form.tsx](file://components/shipment/new-shipment-form.tsx)
 - [page.tsx (New shipment page)](file://app/account/new-shipment/page.tsx)
 - [validation.ts](file://lib/validation.ts)
@@ -16,8 +17,18 @@
 - [account.service.ts](file://server/account.service.ts)
 - [page.tsx (Shipment detail page)](file://app/account/shipments/[id]/page.tsx)
 - [tracking-timeline.tsx](file://components/tracking/tracking-timeline.tsx)
-- [notifications.ts](file://lib/notiﬁcations.ts)
+- [notifications.ts](file://lib/notifications.ts)
+- [advance-status-form.tsx](file://components/ops/advance-status-form.tsx)
+- [zones.ts](file://lib/zones.ts)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated shipment lifecycle section to reflect complete state machine with 10 predefined statuses
+- Enhanced address validation documentation with comprehensive field requirements and zone mapping
+- Added detailed status progression workflow with terminal states and exception handling
+- Expanded tracking event management with operator-controlled status advancement
+- Updated database schema documentation to include new relationships and constraints
 
 ## Table of Contents
 1. Introduction
@@ -31,7 +42,7 @@
 9. Conclusion
 
 ## Introduction
-This document explains Timberland’s shipment management system end-to-end: how shipments are created, priced, tracked, and delivered; how multi-parcel shipments are handled; how addresses are managed; and how status transitions and history are recorded. It also documents the database schema, validation rules, business constraints, and error handling patterns used throughout the system.
+This document explains Timberland's shipment management system end-to-end: how shipments are created, priced, tracked, and delivered; how multi-parcel shipments are handled; how addresses are managed with comprehensive validation; and how status transitions follow a strict state machine with predefined progression paths. It also documents the database schema, validation rules, business constraints, and error handling patterns used throughout the system.
 
 ## Project Structure
 The shipment feature spans server actions, UI components, pricing logic, tracking services, and a Prisma data model. The key areas are:
@@ -48,10 +59,12 @@ NewPage["New Shipment Page"]
 Form["New Shipment Form"]
 DetailPage["Shipment Detail Page"]
 Timeline["Tracking Timeline"]
+OpsForm["Advance Status Form"]
 end
 subgraph "Server"
 CreateAction["createShipmentAction"]
 QuoteAction["estimateQuoteAction"]
+OpsAction["addTrackingEventAction"]
 Rating["estimateQuote (rating.ts)"]
 Pricing["computeQuote (pricing.ts)"]
 TrackingSvc["getTrackedShipment"]
@@ -64,13 +77,16 @@ end
 NewPage --> Form
 Form --> QuoteAction
 Form --> CreateAction
+OpsForm --> OpsAction
 CreateAction --> Rating
 Rating --> Pricing
 CreateAction --> Notifs
+OpsAction --> Notifs
 DetailPage --> AccountSvc
 Timeline --> TrackingSvc
 CreateAction --> DB
 QuoteAction --> DB
+OpsAction --> DB
 TrackingSvc --> DB
 AccountSvc --> DB
 Notifs --> DB
@@ -80,11 +96,13 @@ Notifs --> DB
 - [page.tsx (New shipment page):8-50](file://app/account/new-shipment/page.tsx#L8-L50)
 - [new-shipment-form.tsx:118-162](file://components/shipment/new-shipment-form.tsx#L118-L162)
 - [shipment.actions.ts:45-145](file://server/shipment.actions.ts#L45-L145)
+- [ops.actions.ts:26-87](file://server/ops.actions.ts#L26-L87)
+- [advance-status-form.tsx:20-91](file://components/ops/advance-status-form.tsx#L20-L91)
 - [rating.ts:19-60](file://lib/rating.ts#L19-L60)
 - [pricing.ts:53-87](file://lib/pricing.ts#L53-L87)
 - [tracking.service.ts:69-146](file://server/tracking.service.ts#L69-L146)
 - [account.service.ts:27-38](file://server/account.service.ts#L27-L38)
-- [notifications.ts:49-107](file://lib/notiﬁcations.ts#L49-L107)
+- [notifications.ts:49-107](file://lib/notifications.ts#L49-L107)
 
 **Section sources**
 - [schema.prisma:1-261](file://prisma/schema.prisma#L1-L261)
@@ -95,17 +113,17 @@ Notifs --> DB
 - [account.service.ts:27-38](file://server/account.service.ts#L27-L38)
 
 ## Core Components
-- Shipment lifecycle state machine: Defines valid statuses and allowed transitions, terminal states, and completion semantics.
-- Shipment creation: Validates input, estimates price, persists addresses and parcels, creates tracking events, and triggers notifications.
-- Quoting engine: Pure pricing math applied over zone/service-level rules and parcel inputs.
-- Tracking: Public and private views of shipment status, events, and progress.
-- Address management: Addresses are created per shipment and linked to users and zones.
+- **Complete Shipment Lifecycle State Machine**: Defines 10 valid statuses (CREATED, CONFIRMED, PICKED_UP, IN_TRANSIT, AT_HUB, OUT_FOR_DELIVERY, DELIVERED, EXCEPTION, RETURNED, CANCELLED) with strict transition rules, terminal states, and completion semantics.
+- **Shipment Creation**: Validates input with comprehensive address validation, estimates price, persists addresses and parcels, creates tracking events, and triggers notifications.
+- **Quoting Engine**: Pure pricing math applied over zone/service-level rules and parcel inputs.
+- **Tracking**: Public and private views of shipment status, events, and progress with verification controls.
+- **Address Management**: Addresses are created per shipment with comprehensive validation and automatic zone resolution by postal code.
 
 Key responsibilities:
-- Validation: Centralized schemas for addresses, parcels, quotes, and tracking numbers.
-- Pricing: Zone-based base price, per-kg and per-piece charges, service multiplier, minimum price floor.
-- Status transitions: Enforced via a state machine helper.
-- Notifications: Optional email updates based on user preferences.
+- **Validation**: Centralized schemas for addresses, parcels, quotes, and tracking numbers with strict field requirements.
+- **Pricing**: Zone-based base price, per-kg and per-piece charges, service multiplier, minimum price floor.
+- **Status Transitions**: Enforced via a state machine helper with forward-only progression and exception handling.
+- **Notifications**: Optional email updates based on user preferences.
 
 **Section sources**
 - [shipment-status.ts:9-76](file://lib/shipment-status.ts#L9-L76)
@@ -129,6 +147,7 @@ participant QA as "estimateQuoteAction"
 participant R as "estimateQuote (rating)"
 participant P as "computeQuote (pricing)"
 participant CA as "createShipmentAction"
+participant OPS as "addTrackingEventAction"
 participant DB as "Database"
 participant N as "notifyStatusChange"
 User->>UI : Fill service, addresses, parcels
@@ -142,7 +161,8 @@ User->>UI : Submit create
 UI->>CA : FormData (service, addresses, parcels)
 CA->>DB : Create addresses, shipment, parcels, events
 CA->>N : Fire-and-forget notification
-N->>DB : Log notification
+OPS->>DB : Advance status with validation
+OPS->>N : Fire-and-forget notification
 CA-->>UI : {ok, shipmentId}
 ```
 
@@ -152,15 +172,25 @@ CA-->>UI : {ok, shipmentId}
 - [rating.ts:19-60](file://lib/rating.ts#L19-L60)
 - [pricing.ts:53-87](file://lib/pricing.ts#L53-L87)
 - [shipment.actions.ts:45-145](file://server/shipment.actions.ts#L45-L145)
-- [notifications.ts:49-107](file://lib/notiﬁcations.ts#L49-L107)
+- [ops.actions.ts:26-87](file://server/ops.actions.ts#L26-L87)
+- [notifications.ts:49-107](file://lib/notifications.ts#L49-L107)
 
 ## Detailed Component Analysis
 
-### Shipment Lifecycle and Status Transitions
-- Valid statuses include CREATED, CONFIRMED, PICKED_UP, IN_TRANSIT, AT_HUB, OUT_FOR_DELIVERY, DELIVERED, EXCEPTION, RETURNED, CANCELLED.
-- Forward transitions are constrained by a state machine; terminal states are RETURNED and CANCELLED.
-- Completion is defined as DELIVERED, RETURNED, or CANCELLED.
-- Progress percentage is computed from the ordered progression, with special handling for EXCEPTION and terminal states.
+### Complete Shipment Lifecycle and Status Transitions
+The system implements a comprehensive state machine with 10 predefined statuses and strict transition rules:
+
+**Valid Statuses:**
+- CREATED → CONFIRMED → PICKED_UP → IN_TRANSIT → AT_HUB → OUT_FOR_DELIVERY → DELIVERED
+- EXCEPTION can occur at any stage and allows recovery or termination
+- Terminal states: RETURNED, CANCELLED (no further transitions allowed)
+
+**Forward Transition Rules:**
+- CREATED can advance to CONFIRMED or be CANCELLED immediately
+- CONFIRMED can proceed to PICKED_UP, be CANCELLED, or encounter EXCEPTION
+- Each operational stage (IN_TRANSIT, AT_HUB, OUT_FOR_DELIVERY) can transition to EXCEPTION
+- DELIVERED can only transition to RETURNED
+- EXCEPTION provides multiple recovery paths back to normal flow or termination
 
 ```mermaid
 stateDiagram-v2
@@ -190,12 +220,61 @@ RETURNED --> [*]
 CANCELLED --> [*]
 ```
 
-**Diagram sources**
-- [shipment-status.ts:29-40](file://lib/shipment-status.ts#L29-L40)
+**Progress Calculation:**
+- Normal progression: Linear percentage based on position in sequence
+- EXCEPTION handling: Special case showing 60% progress to indicate issue without blocking
+- Terminal states: DELIVERED, RETURNED, CANCELLED all show 100% completion
 
 **Section sources**
 - [shipment-status.ts:9-76](file://lib/shipment-status.ts#L9-L76)
 - [tracking.service.ts:38-54](file://server/tracking.service.ts#L38-L54)
+- [ops.actions.ts:49-56](file://server/ops.actions.ts#L49-L56)
+
+### Comprehensive Address Validation and Management
+Addresses undergo rigorous validation during shipment creation with comprehensive field requirements:
+
+**Address Field Requirements:**
+- Contact name: Required, 1-120 characters
+- Phone: Required, regex pattern `/^[0-9+\-\s()]{6,20}$/` for international formats
+- Address line 1: Required, 1-160 characters
+- Address line 2: Optional, max 160 characters
+- City: Required, 1-80 characters
+- Region/State: Optional, max 80 characters
+- Postal code: Required, 2-16 characters
+- Country: Required, exactly 2 characters, defaults to "US"
+
+**Zone-Based Address Resolution:**
+- Postal codes are automatically mapped to service zones using prefix matching
+- METRO zone: Postal codes starting with 0-1
+- REGION zone: Postal codes starting with 2-4 (default)
+- REMOTE zone: Postal codes starting with 5-9
+- Zone assignment affects pricing calculations and delivery timeframes
+
+**Address Persistence:**
+- Both sender and recipient addresses are created during shipment creation
+- Addresses are linked to the creating user for future reuse
+- Zone IDs are automatically assigned based on postal code mapping
+- Addresses support labels, contact details, and full address components
+
+```mermaid
+flowchart TD
+Start(["Address Input"]) --> Validate["Validate all fields"]
+Validate --> |Invalid| Error["Return validation errors"]
+Validate --> |Valid| MapZone["Map postal code to zone"]
+MapZone --> CreateAddr["Create address record"]
+CreateAddr --> LinkUser["Link to user account"]
+LinkUser --> Done(["Address ready for shipment"])
+```
+
+**Diagram sources**
+- [validation.ts:38-48](file://lib/validation.ts#L38-L48)
+- [zones.ts:15-34](file://lib/zones.ts#L15-L34)
+- [shipment.actions.ts:87-97](file://server/shipment.actions.ts#L87-L97)
+
+**Section sources**
+- [validation.ts:38-48](file://lib/validation.ts#L38-L48)
+- [zones.ts:15-34](file://lib/zones.ts#L15-L34)
+- [shipment.actions.ts:87-97](file://server/shipment.actions.ts#L87-L97)
 
 ### Shipment Creation Workflow
 - Authentication check ensures only signed-in users can create shipments.
@@ -235,6 +314,26 @@ Quote --> |Config incomplete| ErrorQuote["Return pricing error"]
 - [shipment.actions.ts:45-145](file://server/shipment.actions.ts#L45-L145)
 - [validation.ts:60-67](file://lib/validation.ts#L60-L67)
 - [tracking-number.ts:34-41](file://lib/tracking-number.ts#L34-L41)
+
+### Operator-Controlled Status Advancement
+The operations team can advance shipment status through a controlled interface that enforces state machine rules:
+
+**Status Advancement Process:**
+- Operators must be authenticated with appropriate permissions
+- Only valid transitions according to the state machine are allowed
+- Status changes are recorded as tracking events with source attribution
+- Customer notifications are automatically triggered for status changes
+- UI prevents selection of invalid next states
+
+**Validation Controls:**
+- Terminal states (RETURNED, CANCELLED) cannot be advanced further
+- Exception states provide recovery paths back to normal flow
+- All transitions are logged with timestamps and operator attribution
+- Real-time path revalidation after successful updates
+
+**Section sources**
+- [ops.actions.ts:26-87](file://server/ops.actions.ts#L26-L87)
+- [advance-status-form.tsx:20-91](file://components/ops/advance-status-form.tsx#L20-L91)
 
 ### Parcel Handling Mechanisms
 - Multiple parcels per shipment are supported (up to 20).
@@ -371,10 +470,13 @@ D --> E["Return quoted total + currency + ETA"]
 ```mermaid
 sequenceDiagram
 participant CA as "createShipmentAction"
+participant OPS as "addTrackingEventAction"
 participant DB as "Database"
 participant N as "notifyStatusChange"
 CA->>DB : Create tracking event (CREATED)
+OPS->>DB : Create tracking event (status change)
 CA->>N : notifyStatusChange({shipmentId, eventId})
+OPS->>N : notifyStatusChange({shipmentId, eventId})
 N->>DB : Read shipment + user + preferences
 alt Preference allows EMAIL
 N->>DB : Send email (or log SKIPPED if disabled)
@@ -385,10 +487,11 @@ end
 
 **Diagram sources**
 - [shipment.actions.ts:135-142](file://server/shipment.actions.ts#L135-L142)
-- [notifications.ts:49-107](file://lib/notiﬁcations.ts#L49-L107)
+- [ops.actions.ts:78-79](file://server/ops.actions.ts#L78-L79)
+- [notifications.ts:49-107](file://lib/notifications.ts#L49-L107)
 
 **Section sources**
-- [notifications.ts:49-107](file://lib/notiﬁcations.ts#L49-L107)
+- [notifications.ts:49-107](file://lib/notifications.ts#L49-L107)
 
 ## Dependency Analysis
 High-level dependencies between modules:
@@ -400,27 +503,33 @@ High-level dependencies between modules:
 graph LR
 Form["New Shipment Form"] --> QuoteAction["estimateQuoteAction"]
 Form --> CreateAction["createShipmentAction"]
+OpsForm["Advance Status Form"] --> OpsAction["addTrackingEventAction"]
 QuoteAction --> Rating["estimateQuote"]
 Rating --> Pricing["computeQuote"]
 CreateAction --> Validation["schemas"]
 CreateAction --> TrackingNum["tracking-number"]
 CreateAction --> Notifs["notifications"]
+OpsAction --> Notifs["notifications"]
 Detail["Shipment Detail Page"] --> AccountSvc["account.service"]
 PublicTrack["Public Track"] --> TrackingSvc["tracking.service"]
 ```
 
 **Diagram sources**
 - [new-shipment-form.tsx:118-162](file://components/shipment/new-shipment-form.tsx#L118-L162)
+- [advance-status-form.tsx:20-91](file://components/ops/advance-status-form.tsx#L20-L91)
 - [quote.actions.ts:27-64](file://server/quote.actions.ts#L27-L64)
 - [rating.ts:19-60](file://lib/rating.ts#L19-L60)
 - [pricing.ts:53-87](file://lib/pricing.ts#L53-L87)
 - [shipment.actions.ts:45-145](file://server/shipment.actions.ts#L45-L145)
+- [ops.actions.ts:26-87](file://server/ops.actions.ts#L26-L87)
 - [tracking.service.ts:69-146](file://server/tracking.service.ts#L69-L146)
 - [account.service.ts:27-38](file://server/account.service.ts#L27-L38)
 
 **Section sources**
 - [new-shipment-form.tsx:118-162](file://components/shipment/new-shipment-form.tsx#L118-L162)
+- [advance-status-form.tsx:20-91](file://components/ops/advance-status-form.tsx#L20-L91)
 - [shipment.actions.ts:45-145](file://server/shipment.actions.ts#L45-L145)
+- [ops.actions.ts:26-87](file://server/ops.actions.ts#L26-L87)
 - [tracking.service.ts:69-146](file://server/tracking.service.ts#L69-L146)
 - [account.service.ts:27-38](file://server/account.service.ts#L27-L38)
 
@@ -429,27 +538,34 @@ PublicTrack["Public Track"] --> TrackingSvc["tracking.service"]
 - Parallel loading of service levels, latest address, and user data on the new shipment page reduces perceived latency.
 - Notifications are fire-and-forget to avoid blocking the critical path of shipment creation.
 - Public tracking queries filter to public events only and normalize inputs to reduce enumeration risk.
-
-[No sources needed since this section provides general guidance]
+- Address zone resolution uses efficient prefix matching for postal code categorization.
 
 ## Troubleshooting Guide
 Common issues and resolutions:
-- Invalid parcel data: Ensure parcelsJson is valid JSON and conforms to the parcel schema (description, positive weight, integer pieces within bounds).
-- Service unavailable: Confirm the selected service level exists and is active.
-- Pricing configuration incomplete: Ensure zone and service level exist with a matching rate rule.
-- Tracking number collisions: System retries automatically; if repeated failures occur, verify uniqueness constraints and retry later.
-- Verification failed on public tracking: Provide correct postal code or recipient name token when requested.
+- **Invalid parcel data**: Ensure parcelsJson is valid JSON and conforms to the parcel schema (description, positive weight, integer pieces within bounds).
+- **Service unavailable**: Confirm the selected service level exists and is active.
+- **Pricing configuration incomplete**: Ensure zone and service level exist with a matching rate rule.
+- **Tracking number collisions**: System retries automatically; if repeated failures occur, verify uniqueness constraints and retry later.
+- **Verification failed on public tracking**: Provide correct postal code or recipient name token when requested.
+- **Address validation errors**: Check that all required fields are filled and phone numbers match the expected format pattern.
+- **Illegal status transitions**: Verify the current shipment status and ensure the target status is a valid next state in the state machine.
+- **Zone mapping issues**: Confirm postal codes start with valid prefixes (0-9) for proper zone assignment.
 
 Operational tips:
 - Inspect notification logs for SENT/SKIPPED/FAILED outcomes to diagnose email delivery issues.
 - Use the internal shipment detail page to review full tracking history and address details.
+- Monitor the state machine transitions to identify potential workflow bottlenecks.
+- Review address validation errors to improve customer data quality.
 
 **Section sources**
 - [shipment.actions.ts:55-74](file://server/shipment.actions.ts#L55-L74)
 - [shipment.actions.ts:77-78](file://server/shipment.actions.ts#L77-L78)
+- [ops.actions.ts:49-56](file://server/ops.actions.ts#L49-L56)
 - [rating.ts:31-40](file://lib/rating.ts#L31-L40)
 - [tracking.service.ts:91-93](file://server/tracking.service.ts#L91-L93)
-- [notifications.ts:81-107](file://lib/notiﬁcations.ts#L81-L107)
+- [notifications.ts:81-107](file://lib/notifications.ts#L81-L107)
+- [validation.ts:38-48](file://lib/validation.ts#L38-L48)
+- [zones.ts:15-34](file://lib/zones.ts#L15-L34)
 
 ## Conclusion
-Timberland’s shipment management system provides a robust, validated workflow for creating multi-parcel shipments, computing accurate quotes, managing addresses, and tracking lifecycle events. The state machine enforces consistent status transitions, while the pure pricing engine ensures predictable cost calculations. Public and private tracking views offer safe visibility into shipment progress, and asynchronous notifications keep customers informed without impacting performance.
+Timberland's shipment management system provides a robust, validated workflow for creating multi-parcel shipments, computing accurate quotes, managing addresses with comprehensive validation, and tracking lifecycle events through a complete state machine. The strict status progression ensures consistent operational workflows, while the pure pricing engine ensures predictable cost calculations. Public and private tracking views offer safe visibility into shipment progress, and asynchronous notifications keep customers informed without impacting performance. The system's comprehensive address validation and zone-based routing enable accurate delivery planning and customer experience management.

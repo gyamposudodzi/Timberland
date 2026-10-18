@@ -14,7 +14,22 @@
 - [textarea.tsx](file://components/ui/textarea.tsx)
 - [utils.ts](file://lib/utils.ts)
 - [globals.css](file://app/globals.css)
+- [login-form.tsx](file://components/auth/login-form.tsx)
+- [signup-form.tsx](file://components/auth/signup-form.tsx)
+- [quote-calculator.tsx](file://components/quote/quote-calculator.tsx)
 </cite>
+
+## Update Summary
+**Changes Made**   
+- Updated component documentation to reflect the comprehensive UI component library built with Tailwind CSS v4
+- Enhanced Button component documentation with detailed variant and size configurations
+- Added Badge component documentation with tone-based styling system
+- Updated Alert component documentation with semantic variant support
+- Expanded Card component documentation with section-based composition patterns
+- Enhanced Input, Select, Textarea components with consistent design tokens
+- Added Field and Label components for form accessibility
+- Updated usage examples with real-world implementation patterns from login forms, signup forms, and quote calculator
+- Improved theming documentation with CSS custom properties and Tailwind theme mapping
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -29,9 +44,9 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document describes Timberland’s reusable UI component library. It focuses on visual appearance, behavior, and interaction patterns for core components such as buttons, cards, inputs, selects, labels, fields, alerts, badges, spinners, and textareas. It also documents props, attributes, events, customization options, responsive design guidance, accessibility compliance, cross-browser compatibility, theming, style overrides, and integration with the design system using Tailwind CSS v4.
+This document describes Timberland's reusable UI component library built with Tailwind CSS v4. It focuses on visual appearance, behavior, and interaction patterns for core components such as buttons, cards, inputs, selects, labels, fields, alerts, badges, spinners, and textareas. The library provides a cohesive design system with consistent styling, accessibility compliance, and responsive design patterns.
 
-The components are built with React, styled with Tailwind CSS v4 utilities, and themed through CSS custom properties exposed via Tailwind’s theme layer. Variant-driven styling is implemented using class-variance-authority, and utility classes are merged safely with a shared cn helper.
+The components are built with React, styled with Tailwind CSS v4 utilities, and themed through CSS custom properties exposed via Tailwind's theme layer. Variant-driven styling is implemented using class-variance-authority, and utility classes are merged safely with a shared cn helper.
 
 ## Project Structure
 The UI components live under `components/ui`. Each file exports one or more focused components that compose Tailwind utility classes and design tokens defined in `app/globals.css`. Shared utilities are in `lib/utils.ts`, including the `cn` function used across components to merge class names.
@@ -39,19 +54,20 @@ The UI components live under `components/ui`. Each file exports one or more focu
 ```mermaid
 graph TB
 subgraph "UI Components"
-Button["Button"]
+Button["Button<br/>Variants & Sizes"]
 Card["Card + Sections"]
-Input["Input"]
-Select["Select"]
-Textarea["Textarea"]
-Label["Label"]
-Field["Field"]
-Alert["Alert"]
-Badge["Badge"]
-Spinner["Spinner"]
+Input["Input<br/>Form Control"]
+Select["Select<br/>Dropdown"]
+Textarea["Textarea<br/>Multi-line"]
+Label["Label<br/>Accessible"]
+Field["Field<br/>Form Wrapper"]
+Alert["Alert<br/>Feedback"]
+Badge["Badge<br/>Status Indicator"]
+Spinner["Spinner<br/>Loading"]
 end
-Utils["lib/utils.ts<br/>cn()"]
+Utils["lib/utils.ts<br/>cn() & Utilities"]
 Theme["app/globals.css<br/>Design Tokens & Theme"]
+Usage["Real Usage Examples<br/>Forms & Calculators"]
 Button --> Utils
 Card --> Utils
 Input --> Utils
@@ -73,6 +89,13 @@ Field --> Theme
 Alert --> Theme
 Badge --> Theme
 Spinner --> Theme
+Usage --> Button
+Usage --> Card
+Usage --> Input
+Usage --> Select
+Usage --> Field
+Usage --> Alert
+Usage --> Spinner
 ```
 
 **Diagram sources**
@@ -88,6 +111,9 @@ Spinner --> Theme
 - [spinner.tsx:1-20](file://components/ui/spinner.tsx#L1-L20)
 - [utils.ts:1-29](file://lib/utils.ts#L1-L29)
 - [globals.css:1-116](file://app/globals.css#L1-L116)
+- [login-form.tsx:1-39](file://components/auth/login-form.tsx#L1-L39)
+- [signup-form.tsx:1-39](file://components/auth/signup-form.tsx#L1-L39)
+- [quote-calculator.tsx:1-155](file://components/quote/quote-calculator.tsx#L1-L155)
 
 **Section sources**
 - [button.tsx:1-40](file://components/ui/button.tsx#L1-L40)
@@ -104,66 +130,66 @@ Spinner --> Theme
 - [globals.css:1-116](file://app/globals.css#L1-L116)
 
 ## Core Components
-This section summarizes each component’s purpose, props, default behavior, and customization points.
+This section summarizes each component's purpose, props, default behavior, and customization points.
 
-- Button
-  - Purpose: Primary interactive action element.
+- **Button**
+  - Purpose: Primary interactive action element with variant-driven styling.
   - Props: variant (primary, secondary, outline, ghost, destructive, accent), size (sm, md, lg, icon), plus standard HTML button attributes.
   - Behavior: Focus ring, hover states, disabled state, accessible focus management.
   - Customization: Use variant and size; extend with className; override via Tailwind theme tokens.
 
-- Card and Card Sections
+- **Card and Card Sections**
   - Purpose: Content container with header, title, description, content, and footer sections.
   - Props: Standard HTML div attributes for each section; no extra props beyond className.
   - Behavior: Consistent spacing, borders, shadows, and typography.
   - Customization: Compose sections; override with className.
 
-- Input
-  - Purpose: Single-line text input.
+- **Input**
+  - Purpose: Single-line text input with consistent styling.
   - Props: Standard HTML input attributes; supports ref forwarding.
   - Behavior: Focus ring, placeholder color, disabled state, consistent sizing.
   - Customization: Extend with className; integrate with Field for label/hint/error.
 
-- Select
-  - Purpose: Dropdown selection control.
+- **Select**
+  - Purpose: Dropdown selection control with native select semantics.
   - Props: Standard HTML select attributes; supports ref forwarding and children (options).
   - Behavior: Focus ring, disabled state, consistent sizing.
   - Customization: Extend with className; pair with Field for labeling.
 
-- Textarea
-  - Purpose: Multi-line text input.
+- **Textarea**
+  - Purpose: Multi-line text input with minimum height.
   - Props: Standard HTML textarea attributes; supports ref forwarding.
   - Behavior: Focus ring, placeholder color, disabled state, minimum height.
   - Customization: Extend with className; integrate with Field.
 
-- Label
-  - Purpose: Accessible label for form controls.
+- **Label**
+  - Purpose: Accessible label for form controls with proper semantics.
   - Props: Standard HTML label attributes; supports ref forwarding.
-  - Behavior: Semantic label styling.
+  - Behavior: Semantic label styling with proper font weights.
   - Customization: Extend with className; use htmlFor to associate with inputs.
 
-- Field
+- **Field**
   - Purpose: Form field wrapper providing label, hint, error, and required indicator.
   - Props: label, htmlFor, hint, error, required, className, children.
   - Behavior: Renders label with optional required marker, then children, then either error or hint message.
   - Customization: Style via className; compose with Input/Select/Textarea.
 
-- Alert
-  - Purpose: Contextual feedback messages.
+- **Alert**
+  - Purpose: Contextual feedback messages with semantic variants.
   - Props: variant (info, success, error, warning); standard HTML div attributes.
   - Behavior: Role="alert", border and background based on variant.
   - Customization: Extend with className; choose variant for semantic meaning.
 
-- Badge
-  - Purpose: Small status or category indicators.
+- **Badge**
+  - Purpose: Small status or category indicators with tone-based styling.
   - Props: tone (neutral, active, success, warning, danger); standard HTML span attributes.
   - Behavior: Inline-flex badge with border and tone-based colors.
   - Customization: Extend with className; choose tone for semantics.
 
-- Spinner
-  - Purpose: Loading indicator.
+- **Spinner**
+  - Purpose: Loading indicator with accessible markup.
   - Props: className only; uses aria-hidden.
-  - Behavior: Animated SVG spinner.
+  - Behavior: Animated SVG spinner with proper accessibility.
   - Customization: Size and color via Tailwind utilities; wrap with accessible context when needed.
 
 **Section sources**
@@ -182,7 +208,7 @@ This section summarizes each component’s purpose, props, default behavior, and
 The UI components follow a consistent architecture:
 - Styling strategy: Tailwind CSS v4 utilities combined with class-variance-authority variants where applicable.
 - Class merging: All components use the shared `cn` helper from `lib/utils.ts` to merge user-provided classes safely.
-- Theming: Design tokens are defined as CSS custom properties and mapped into Tailwind’s theme via `@theme inline` in `app/globals.css`.
+- Theming: Design tokens are defined as CSS custom properties and mapped into Tailwind's theme via `@theme inline` in `app/globals.css`.
 - Accessibility: Components expose native semantics (e.g., role="alert"), support focus-visible rings, and forward refs for proper focus management.
 
 ```mermaid
@@ -193,6 +219,7 @@ D["Design Tokens<br/>CSS variables"] --> E["@theme inline<br/>Tailwind theme map
 E --> C
 A --> C
 A --> D
+F["Real Usage<br/>Forms & Calculators"] --> A
 ```
 
 **Diagram sources**
@@ -201,6 +228,9 @@ A --> D
 - [button.tsx:1-40](file://components/ui/button.tsx#L1-L40)
 - [alert.tsx:1-24](file://components/ui/alert.tsx#L1-L24)
 - [badge.tsx:1-28](file://components/ui/badge.tsx#L1-L28)
+- [login-form.tsx:1-39](file://components/auth/login-form.tsx#L1-L39)
+- [signup-form.tsx:1-39](file://components/auth/signup-form.tsx#L1-L39)
+- [quote-calculator.tsx:1-155](file://components/quote/quote-calculator.tsx#L1-L155)
 
 **Section sources**
 - [utils.ts:1-29](file://lib/utils.ts#L1-L29)
@@ -473,8 +503,7 @@ Theme --> Tailwind
 - Avoid excessive className overrides; leverage Tailwind theme tokens for consistency.
 - Use variant and size props to minimize conditional rendering logic.
 - Keep animations minimal; Spinner uses a lightweight SVG animation.
-
-[No sources needed since this section provides general guidance]
+- Utilize React's forwardRef for optimal performance with controlled components.
 
 ## Troubleshooting Guide
 - Focus ring not visible: Ensure focus-visible styles are applied; verify that focus-visible ring token is set in theme.
@@ -482,6 +511,7 @@ Theme --> Tailwind
 - Disabled state not working: Verify disabled prop is passed to native elements; ensure pointer-events and opacity are applied.
 - Label not associated: Ensure htmlFor matches input id; use Field to automate association.
 - Alert not announced: Ensure role="alert" is present; consider adding aria-live for dynamic updates.
+- Form validation issues: Use Field component for consistent error handling and validation messaging.
 
 **Section sources**
 - [button.tsx:5-39](file://components/ui/button.tsx#L5-L39)
@@ -489,64 +519,82 @@ Theme --> Tailwind
 - [select.tsx:4-18](file://components/ui/select.tsx#L4-L18)
 - [textarea.tsx:4-16](file://components/ui/textarea.tsx#L4-L16)
 - [alert.tsx:5-23](file://components/ui/alert.tsx#L5-L23)
+- [field.tsx:14-29](file://components/ui/field.tsx#L14-L29)
 - [globals.css:68-95](file://app/globals.css#L68-L95)
 
 ## Conclusion
-Timberland’s UI component library provides a cohesive, accessible, and customizable set of primitives for building forms, layouts, and feedback surfaces. By leveraging Tailwind CSS v4, class-variance-authority, and design tokens, the components offer consistent visuals and behaviors while remaining flexible for project-specific needs.
-
-[No sources needed since this section summarizes without analyzing specific files]
+Timberland's UI component library provides a cohesive, accessible, and customizable set of primitives for building forms, layouts, and feedback surfaces. By leveraging Tailwind CSS v4, class-variance-authority, and design tokens, the components offer consistent visuals and behaviors while remaining flexible for project-specific needs. The comprehensive component ecosystem includes form controls, layout containers, feedback mechanisms, and utility components that work together seamlessly.
 
 ## Appendices
 
 ### Usage Examples and Composition Patterns
-- Button composition:
+- **Button composition**:
   - Use variant and size to match hierarchy and importance.
   - Combine with icons via className or slot content.
   - Reference: [button.tsx:5-39](file://components/ui/button.tsx#L5-L39)
 
-- Card composition:
+- **Card composition**:
   - Stack CardHeader, CardTitle, CardDescription, CardContent, and CardFooter.
   - Reference: [card.tsx:4-31](file://components/ui/card.tsx#L4-L31)
 
-- Form composition:
+- **Form composition**:
   - Wrap Input/Select/Textarea inside Field to provide label, hint, and error messaging.
   - Reference: [field.tsx:4-29](file://components/ui/field.tsx#L4-L29)
 
-- Feedback composition:
+- **Feedback composition**:
   - Use Alert for contextual messages; choose variant for semantics.
   - Use Badge for status tags; choose tone for meaning.
   - Reference: [alert.tsx:5-23](file://components/ui/alert.tsx#L5-L23), [badge.tsx:5-27](file://components/ui/badge.tsx#L5-L27)
 
+### Real-World Implementation Examples
+- **Login Form Pattern**:
+  - Combines Field, Input, Button, Alert, and Spinner for authentication flows.
+  - Demonstrates error handling and loading states.
+  - Reference: [login-form.tsx:1-39](file://components/auth/login-form.tsx#L1-L39)
+
+- **Signup Form Pattern**:
+  - Shows form validation with Field error handling.
+  - Implements progressive disclosure with hints and required indicators.
+  - Reference: [signup-form.tsx:1-39](file://components/auth/signup-form.tsx#L1-L39)
+
+- **Quote Calculator Pattern**:
+  - Complex form with multiple Input types and Select dropdown.
+  - Uses Card sections for organized layout.
+  - Integrates with server actions and displays results.
+  - Reference: [quote-calculator.tsx:1-155](file://components/quote/quote-calculator.tsx#L1-L155)
+
 ### Responsive Design Guidelines
-- Use Tailwind’s responsive prefixes to adjust spacing, typography, and layout per breakpoint.
+- Use Tailwind's responsive prefixes to adjust spacing, typography, and layout per breakpoint.
 - Keep form controls full-width on small screens; constrain max-width on larger screens using container utilities.
 - Maintain sufficient touch targets for mobile interactions.
-
-[No sources needed since this section provides general guidance]
+- Leverage grid systems for complex layouts like the quote calculator.
 
 ### Accessibility Compliance
 - Provide semantic roles where appropriate (e.g., role="alert").
 - Ensure focus-visible outlines are visible for keyboard users.
 - Associate labels with controls via htmlFor or Field automation.
 - Mark decorative animations as aria-hidden.
+- Use proper form semantics with Field component for enhanced accessibility.
 
 **Section sources**
 - [alert.tsx:21-23](file://components/ui/alert.tsx#L21-L23)
 - [spinner.tsx:5-17](file://components/ui/spinner.tsx#L5-L17)
 - [field.tsx:14-29](file://components/ui/field.tsx#L14-L29)
+- [login-form.tsx:1-39](file://components/auth/login-form.tsx#L1-L39)
+- [signup-form.tsx:1-39](file://components/auth/signup-form.tsx#L1-L39)
 
 ### Cross-Browser Compatibility
 - Rely on standard HTML elements and widely supported CSS features.
 - Use focus-visible for modern focus management; fallbacks are handled by browsers.
 - Test select appearance across browsers; consider native select styling limitations.
-
-[No sources needed since this section provides general guidance]
+- Validate CSS custom properties and Tailwind CSS v4 compatibility.
 
 ### Theming and Style Overrides
 - Define design tokens as CSS variables and map them to Tailwind theme values via `@theme inline`.
 - Override tokens for light/dark modes by adjusting variable values under `.dark`.
 - Extend component variants by editing cva configurations within component files.
 - Use className to apply local overrides when necessary.
+- Centralize brand colors and typography in globals.css for consistency.
 
 **Section sources**
 - [globals.css:8-66](file://app/globals.css#L8-L66)
@@ -559,7 +607,11 @@ Timberland’s UI component library provides a cohesive, accessible, and customi
 - Centralize tokens in `app/globals.css` to maintain brand consistency.
 - Use shared utilities (`cn`) to avoid class conflicts.
 - Compose higher-level components from these primitives to enforce design rules at the application level.
+- Follow established patterns from login forms, signup forms, and quote calculators for consistent implementation.
 
 **Section sources**
 - [utils.ts:1-6](file://lib/utils.ts#L1-L6)
 - [globals.css:1-116](file://app/globals.css#L1-L116)
+- [login-form.tsx:1-39](file://components/auth/login-form.tsx#L1-L39)
+- [signup-form.tsx:1-39](file://components/auth/signup-form.tsx#L1-L39)
+- [quote-calculator.tsx:1-155](file://components/quote/quote-calculator.tsx#L1-L155)

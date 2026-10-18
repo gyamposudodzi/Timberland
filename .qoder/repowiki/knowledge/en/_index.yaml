@@ -3,11 +3,11 @@ schema_version: 1
 locale: en-US
 branch: main
 nodes_managed: true
-exported_at: "2026-10-18T18:58:23Z"
+exported_at: "2026-10-18T20:05:16Z"
 modules:
     "":
-        dir_name: Timberland Courier Delivery Platform (Next.js App Router)
-        title: Timberland Courier Delivery Platform (Next.js App Router)
+        dir_name: Timberland Courier Platform — Next.js Monolith Root
+        title: Timberland Courier Platform — Next.js Monolith Root
         scope:
             - README.md
             - AGENTS.md
@@ -33,8 +33,8 @@ modules:
         depends_on: []
         related_to: []
     app_routes:
-        dir_name: Next.js App Router Pages & Routes
-        title: Next.js App Router Pages & Routes
+        dir_name: Next.js App Router Public & Account Routes
+        title: Next.js App Router Public & Account Routes
         scope:
             - app/
         source_files: []
@@ -42,10 +42,9 @@ modules:
         depends_on: []
         related_to:
             - path: server_actions
-            - path: tests
     components:
-        dir_name: Domain Feature Components & Shared UI Primitives
-        title: Domain Feature Components & Shared UI Primitives
+        dir_name: Timberland UI Component Library & Feature Components
+        title: Timberland UI Component Library & Feature Components
         scope:
             - components/
         source_files: []
@@ -53,8 +52,8 @@ modules:
         depends_on: []
         related_to: []
     lib:
-        dir_name: lib
-        title: lib
+        dir_name: Shared Server-Side Library (Auth, Pricing, Validation & Domain Primitives)
+        title: Shared Server-Side Library (Auth, Pricing, Validation & Domain Primitives)
         scope:
             - lib/
         source_files: []
@@ -62,18 +61,17 @@ modules:
         depends_on: []
         related_to: []
     prisma_schema:
-        dir_name: Timberland Delivery Platform Prisma Data Schema
-        title: Timberland Delivery Platform Prisma Data Schema
+        dir_name: Timberland Courier Platform — Prisma Data Schema & Seed
+        title: Timberland Courier Platform — Prisma Data Schema & Seed
         scope:
             - prisma/
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: tests
+        related_to: []
     server_actions:
-        dir_name: Next.js Server Actions & Read Services
-        title: Next.js Server Actions & Read Services
+        dir_name: Server Actions & Read Services (Next.js Server-Side API)
+        title: Server Actions & Read Services (Next.js Server-Side API)
         scope:
             - server/
         source_files: []
@@ -82,13 +80,11 @@ modules:
         related_to:
             - path: app_routes
     tests:
-        dir_name: Unit & E2E Test Suite
-        title: Unit & E2E Test Suite
+        dir_name: Timberland Test Suite (Vitest Unit + Playwright E2E)
+        title: Timberland Test Suite (Vitest Unit + Playwright E2E)
         scope:
             - tests/
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: app_routes
-            - path: prisma_schema
+        related_to: []

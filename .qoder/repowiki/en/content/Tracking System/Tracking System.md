@@ -16,28 +16,37 @@
 - [guest tracking e2e test](file://tests/e2e/tracking.spec.ts)
 </cite>
 
+## Update Summary
+**Changes Made**
+- Updated architecture diagrams to reflect actual implementation patterns
+- Enhanced security considerations section with PII protection details
+- Added comprehensive testing coverage information
+- Refined performance considerations based on actual rate limiting implementation
+- Updated troubleshooting guide with specific error scenarios
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Project Structure](#project-structure)
 3. [Core Components](#core-components)
 4. [Architecture Overview](#architecture-overview)
 5. [Detailed Component Analysis](#detailed-component-analysis)
-6. [Dependency Analysis](#dependency-analysis)
-7. [Performance Considerations](#performance-considerations)
-8. [Troubleshooting Guide](#troubleshooting-guide)
-9. [Conclusion](#conclusion)
-10. [Appendices](#appendices)
+6. [Security Considerations](#security-considerations)
+7. [Testing Strategy](#testing-strategy)
+8. [Performance Considerations](#performance-considerations)
+9. [Troubleshooting Guide](#troubleshooting-guide)
+10. [Conclusion](#conclusion)
+11. [Appendices](#appendices)
 
 ## Introduction
-This document explains Timberland’s public shipment tracking system. It covers how public tracking numbers are generated and validated, how the public tracking interface works, how real-time status updates are displayed, and how the server-side tracking service retrieves and shapes data for guests. It also documents the timeline visualization, progress indicators, status pill components, query processing patterns, performance considerations, and guidance for implementing or customizing tracking features.
+This document explains Timberland's public shipment tracking system. It covers how public tracking numbers are generated using Base32 encoding and validated, how the public tracking interface works with real-time timeline visualization, and how the server-side tracking service retrieves and shapes guest-safe data. The system provides a secure, efficient way for guests to monitor shipments without requiring an account, featuring robust input validation, rate limiting, and PII protection.
 
 ## Project Structure
-The tracking feature spans a small set of focused modules:
-- Public-facing routes under `app/track`.
-- A server-only tracking service that queries the database and builds a guest-safe response.
-- Shared libraries for tracking number generation/validation, shipment status metadata, and rate limiting.
-- UI components for the tracking form, timeline, and status pill.
-- Database schema defining shipments, parcels, addresses, service levels, and tracking events.
+The tracking feature spans focused modules across the application:
+- Public-facing routes under `app/track` for guest access
+- A server-only tracking service that queries the database and builds guest-safe responses
+- Shared libraries for tracking number generation/validation, shipment status metadata, and rate limiting
+- UI components for the tracking form, timeline visualization, and status indicators
+- Database schema defining shipments, parcels, addresses, service levels, and tracking events
 
 ```mermaid
 graph TB
@@ -97,16 +106,16 @@ TrackDetail --> Timeline
 - [schema.prisma:160-226](file://prisma/schema.prisma#L160-L226)
 
 ## Core Components
-- Tracking number generator and validator: Produces random Base32 codes with a check character and validates user input.
-- Shipment status metadata: Defines lifecycle states, transitions, labels, descriptions, and visual tones.
-- Tracking service: Server-only function that fetches a shipment and returns a guest-safe payload with computed progress and events.
-- Public tracking pages: Home search page and per-tracking-number detail page with rate limiting and validation.
-- UI components: Search form, status pill, and timeline renderer.
+- **Tracking number generator and validator**: Produces random Base32 codes with check characters and validates user input format
+- **Shipment status metadata**: Defines lifecycle states, transitions, labels, descriptions, and visual tones
+- **Tracking service**: Server-only function that fetches shipments and returns guest-safe payloads with computed progress and events
+- **Public tracking pages**: Home search page and per-tracking-number detail page with rate limiting and validation
+- **UI components**: Search form, status pill, and timeline renderer for displaying tracking information
 
 Key responsibilities:
-- Input normalization and validation occur both client-side (form) and server-side (route + service).
-- Guest enumeration protection is implemented via IP-based rate limiting on the detail route.
-- Data exposure is restricted to public fields; sensitive address/contact details are not included in the public response.
+- Input normalization and validation occur both client-side (form) and server-side (route + service)
+- Guest enumeration protection via IP-based rate limiting on the detail route
+- Data exposure restricted to public fields; sensitive address/contact details excluded from public responses
 
 **Section sources**
 - [tracking-number.ts:1-57](file://lib/tracking-number.ts#L1-L57)
@@ -118,12 +127,12 @@ Key responsibilities:
 - [tracking timeline component:1-51](file://components/tracking/tracking-timeline.tsx#L1-L51)
 
 ## Architecture Overview
-The public tracking flow is a Next.js App Router server-rendered page that:
-1. Accepts a tracking number from the URL.
-2. Applies rate limiting by client IP.
-3. Validates the tracking number format.
-4. Calls the server-only tracking service to retrieve a guest-safe dataset.
-5. Renders the status pill, progress bar, origin/destination summary, and timeline.
+The public tracking flow uses Next.js App Router server-rendered pages that:
+1. Accept tracking numbers from URLs or forms
+2. Apply IP-based rate limiting for guest protection
+3. Validate tracking number format using Base32 encoding rules
+4. Call the server-only tracking service to retrieve guest-safe datasets
+5. Render status pills, progress bars, origin/destination summaries, and timelines
 
 ```mermaid
 sequenceDiagram
@@ -167,18 +176,19 @@ end
 ## Detailed Component Analysis
 
 ### Tracking Number Generation and Validation
-- Format: Two-letter prefix plus eight Base32 characters plus one check character. The alphabet excludes ambiguous letters for readability.
-- Randomness: Uses secure random selection to avoid sequential codes and reduce enumeration risk.
-- Check character: Deterministic checksum derived from the body to detect typos.
-- Normalization: Uppercases and removes spaces/dashes before validation.
-- Tests verify valid generation, tamper detection, normalization, and non-sequential distribution.
+- **Format**: Two-letter prefix (`TB`) plus eight Base32 characters plus one check character (11 chars total)
+- **Encoding**: Uses Crockford's Base32 alphabet excluding ambiguous letters (I, L, O, U) for readability
+- **Randomness**: Secure random selection prevents sequential codes and reduces enumeration risk
+- **Check character**: Deterministic checksum derived from body content detects typos
+- **Normalization**: Uppercases and removes spaces/dashes before validation
+- **Testing**: Comprehensive tests verify valid generation, tamper detection, normalization, and non-sequential distribution
 
 ```mermaid
 flowchart TD
 Start(["Generate or Validate"]) --> Normalize["Normalize Input<br/>Uppercase, Remove Separators"]
 Normalize --> LengthCheck{"Length == Prefix + Body + Check?"}
 LengthCheck --> |No| Reject["Reject"]
-LengthCheck --> |Yes| PrefixCheck{"StartsWith Prefix?"}
+LengthCheck --> |Yes| PrefixCheck{"StartsWith 'TB'?"}
 PrefixCheck --> |No| Reject
 PrefixCheck --> |Yes| BodyAlphabet{"All Body Chars In Base32 Alphabet?"}
 BodyAlphabet --> |No| Reject
@@ -196,9 +206,9 @@ MatchCheck --> |Yes| Accept["Accept"]
 - [tracking number tests:1-29](file://tests/tracking-number.test.ts#L1-L29)
 
 ### Public Tracking Interface
-- Home page: Provides a simple form to enter a tracking number and navigate to the detail route.
-- Detail page: Enforces rate limiting, validates the code, calls the tracking service, and renders a card with status, progress, route summary, and timeline.
-- Not found handling: Shows a friendly message and reuses the tracking form.
+- **Home page**: Simple form to enter tracking numbers and navigate to detail routes
+- **Detail page**: Enforces rate limiting, validates codes, calls tracking service, renders cards with status, progress, route summary, and timeline
+- **Error handling**: Shows friendly messages and reuses tracking forms for invalid or unknown codes
 
 ```mermaid
 flowchart TD
@@ -227,10 +237,10 @@ Found --> |Yes| Render["Render Status, Progress, Timeline"]
 - [track form component:1-47](file://components/tracking/track-form.tsx#L1-L47)
 
 ### Real-Time Status Updates and Timeline Visualization
-- Events: Public tracking events are stored per shipment and filtered to only include public entries.
-- Ordering: Events are returned newest first.
-- Rendering: The timeline component displays each event with a tone-colored dot, label, timestamp, optional location, and optional description.
-- Empty state: Displays a message when no events exist.
+- **Events**: Public tracking events stored per shipment and filtered to include only public entries
+- **Ordering**: Events returned newest first for chronological display
+- **Rendering**: Timeline component displays each event with tone-colored dots, labels, timestamps, optional locations, and descriptions
+- **Empty state**: Shows helpful message when no events exist
 
 ```mermaid
 classDiagram
@@ -256,8 +266,9 @@ TrackingTimeline --> TimelineEvent : "renders list"
 - [tracking.service.ts:103-112](file://server/tracking.service.ts#L103-L112)
 
 ### Progress Indicators and Status Pill
-- Progress percent: Computed from the current shipment status using a predefined order and special cases for terminal or exceptional statuses.
-- Status pill: Renders a badge with the status label and tone based on shared status metadata.
+- **Progress percent**: Computed from current shipment status using predefined order and special cases for terminal or exceptional statuses
+- **Status pill**: Renders badges with status labels and tones based on shared status metadata
+- **Visual consistency**: All components use consistent color coding and labeling
 
 ```mermaid
 flowchart TD
@@ -278,10 +289,10 @@ Meta --> Pill["Render Status Pill Badge"]
 - [shipment-status.ts:62-76](file://lib/shipment-status.ts#L62-L76)
 
 ### Tracking Service Layer, Query Processing, and Data Retrieval
-- Input: Raw tracking number and optional verification string (postal code or recipient name token).
-- Query: Retrieves the shipment with related service level, sender/recipient addresses, parcels, and public tracking events.
-- Verification: If provided, ensures the verification matches either the postal code or a token from the recipient name.
-- Output: Builds a guest-safe object including status metadata, estimated delivery, origin/destination cities/regions/countries, pieces, total weight, progress percent, and events. Sensitive fields like street address, contact name, phone, and price are excluded.
+- **Input**: Raw tracking number and optional verification string (postal code or recipient name token)
+- **Query**: Retrieves shipment with related service level, sender/recipient addresses, parcels, and public tracking events
+- **Verification**: Ensures verification matches either postal code or token from recipient name when provided
+- **Output**: Builds guest-safe objects including status metadata, estimated delivery, origin/destination details, pieces, total weight, progress percent, and events while excluding sensitive fields
 
 ```mermaid
 sequenceDiagram
@@ -312,9 +323,9 @@ Service-->>Route : { status : "ok", data : PublicTracking }
 ### Example Implementations and Customization Guidance
 
 #### Implementing Tracking Functionality
-- Add a tracking form that normalizes input and navigates to `/track/[code]`.
-- On the detail page, apply rate limiting, validate the code, call the tracking service, and render the result.
-- Use the status pill and timeline components to display status and history.
+- Add tracking forms that normalize input and navigate to `/track/[code]`
+- On detail pages, apply rate limiting, validate codes, call tracking service, and render results
+- Use status pill and timeline components for consistent status and history display
 
 References:
 - [track form component:1-47](file://components/tracking/track-form.tsx#L1-L47)
@@ -322,83 +333,130 @@ References:
 - [tracking.service.ts:69-146](file://server/tracking.service.ts#L69-L146)
 
 #### Customizing Timeline Displays
-- Extend or replace the timeline component to change dot colors, layout, or add extra event fields.
-- Use the shared status metadata to map status codes to labels and tones consistently.
+- Extend or replace timeline components to change dot colors, layout, or add extra event fields
+- Use shared status metadata to map status codes to labels and tones consistently
 
 References:
 - [tracking timeline component:1-51](file://components/tracking/tracking-timeline.tsx#L1-L51)
 - [shipment-status.ts:62-76](file://lib/shipment-status.ts#L62-L76)
 
 #### Integrating Tracking Widgets
-- Reuse the track form component inside headers, footers, or other pages to allow quick lookups.
-- Embed the status pill where you need compact status badges.
+- Reuse track form components inside headers, footers, or other pages for quick lookups
+- Embed status pills where compact status badges are needed
 
 References:
 - [track form component:1-47](file://components/tracking/track-form.tsx#L1-L47)
 - [status pill component:1-8](file://components/tracking/status-pill.tsx#L1-L8)
 
-## Dependency Analysis
-The tracking subsystem has clear boundaries:
-- Pages depend on the tracking service and shared libraries.
-- The tracking service depends on Prisma and status metadata.
-- UI components depend on status metadata for consistent labeling and tones.
-- Rate limiting is isolated and used by the detail page.
+## Security Considerations
+The tracking system implements multiple layers of security to protect both the system and user privacy:
 
-```mermaid
-graph LR
-TrackDetail["Track Detail Page"] --> TrackingService["Tracking Service"]
-TrackDetail --> TrackingNumber["Tracking Number Lib"]
-TrackDetail --> RateLimit["Rate Limiter"]
-TrackingService --> ShipmentStatus["Shipment Status Lib"]
-TrackingService --> Prisma["Prisma Client"]
-Timeline["Tracking Timeline"] --> ShipmentStatus
-StatusPill["Status Pill"] --> ShipmentStatus
-```
+### PII Protection
+- **Field exclusion**: Sensitive fields like street addresses, contact names, phone numbers, and prices are never included in public tracking responses
+- **Event filtering**: Only public tracking events are fetched and rendered to the client
+- **Address masking**: City, region, and country are shown but detailed addresses remain private
 
-**Diagram sources**
-- [track detail page:1-182](file://app/track/[trackingNumber]/page.tsx#L1-L182)
-- [tracking.service.ts:1-147](file://server/tracking.service.ts#L1-L147)
-- [tracking-number.ts:1-57](file://lib/tracking-number.ts#L1-L57)
-- [rate-limit.ts:1-56](file://lib/rate-limit.ts#L1-L56)
-- [shipment-status.ts:1-77](file://lib/shipment-status.ts#L1-L77)
-- [tracking timeline component:1-51](file://components/tracking/tracking-timeline.tsx#L1-L51)
-- [status pill component:1-8](file://components/tracking/status-pill.tsx#L1-L8)
+### Enumeration Prevention
+- **Rate limiting**: IP-based rate limiting prevents automated enumeration attacks
+- **Tracking number format**: Random Base32 encoding with check characters makes guessing difficult
+- **Validation**: Both client and server-side validation ensures only properly formatted codes are processed
+
+### Input Sanitization
+- **Normalization**: All tracking numbers are normalized (uppercase, separator removal) before processing
+- **URL encoding**: Tracking numbers are properly encoded when passed through URLs
+- **Type safety**: TypeScript interfaces ensure type safety throughout the data pipeline
 
 **Section sources**
-- [track detail page:1-182](file://app/track/[trackingNumber]/page.tsx#L1-L182)
-- [tracking.service.ts:1-147](file://server/tracking.service.ts#L1-L147)
-- [tracking-number.ts:1-57](file://lib/tracking-number.ts#L1-L57)
-- [rate-limit.ts:1-56](file://lib/rate-limit.ts#L1-L56)
-- [shipment-status.ts:1-77](file://lib/shipment-status.ts#L1-L77)
-- [tracking timeline component:1-51](file://components/tracking/tracking-timeline.tsx#L1-L51)
-- [status pill component:1-8](file://components/tracking/status-pill.tsx#L1-L8)
+- [tracking.service.ts:64-68](file://server/tracking.service.ts#L64-L68)
+- [tracking.service.ts:82-86](file://server/tracking.service.ts#L82-L86)
+- [tracking-number.ts:4-10](file://lib/tracking-number.ts#L4-L10)
+- [guest tracking e2e test:21-26](file://tests/e2e/tracking.spec.ts#L21-L26)
+
+## Testing Strategy
+The tracking system employs comprehensive testing across multiple levels:
+
+### Unit Tests
+- **Tracking number generation**: Validates proper Base32 encoding, check character calculation, and randomness
+- **Validation logic**: Tests format validation, normalization, and tamper detection
+- **Status metadata**: Verifies status transitions, labels, and visual properties
+
+### End-to-End Tests
+- **Guest tracking flow**: Tests complete user journey from form submission to result display
+- **PII protection**: Asserts that sensitive information is not exposed in public views
+- **Error handling**: Validates friendly error messages for invalid or unknown tracking numbers
+- **Navigation**: Tests form submission and URL routing behavior
+
+### Test Coverage Areas
+- Tracking number generation produces varied, non-sequential codes
+- Tampered tracking numbers are properly rejected
+- Normalization handles various input formats correctly
+- Public tracking shows expected status and timeline information
+- Private information remains hidden from guest users
+
+**Section sources**
+- [tracking number tests:1-29](file://tests/tracking-number.test.ts#L1-L29)
+- [guest tracking e2e test:1-42](file://tests/e2e/tracking.spec.ts#L1-L42)
 
 ## Performance Considerations
-- Rate limiting: The detail page applies an in-memory fixed-window rate limiter keyed by client IP to blunt enumeration. For multi-instance deployments, replace the in-memory store with a shared backend like Redis while keeping the same call signature.
-- Query shape: The tracking service uses a single Prisma query with selective includes to minimize round trips and avoid leaking private fields.
-- Event filtering: Only public tracking events are fetched and rendered.
-- Memory management: The rate limiter includes a sweep utility to drop expired buckets and bound memory usage.
-- Caching strategy:
-  - Current implementation does not cache tracking results at the route layer.
-  - Recommended additions:
-    - Short-lived read-through cache keyed by tracking number for repeated requests within a short window.
-    - Cache invalidation on new public tracking events.
-    - Separate cache keys for verified vs unverified requests if verification affects content.
-    - Consider edge caching for static parts of the page (e.g., status labels) but keep dynamic data server-fetched.
+The tracking system is optimized for performance and scalability:
 
-[No sources needed since this section provides general guidance]
+### Rate Limiting
+- **In-memory storage**: Fixed-window rate limiter uses in-memory buckets for fast lookups
+- **IP-based limiting**: Protects against enumeration attacks while allowing legitimate usage
+- **Memory management**: Sweep utility periodically cleans expired buckets to prevent memory leaks
+- **Scalability**: Designed for easy migration to distributed stores like Redis for multi-instance deployments
+
+### Database Optimization
+- **Single query approach**: Tracking service uses Prisma's selective includes to minimize database round trips
+- **Index utilization**: Database indexes on tracking numbers, status, and public events improve query performance
+- **Selective data fetching**: Only public fields are retrieved, reducing data transfer overhead
+
+### Caching Strategy
+- **Current state**: No route-level caching implemented for tracking results
+- **Recommended enhancements**:
+  - Short-lived read-through cache keyed by tracking number for repeated requests
+  - Cache invalidation on new public tracking events
+  - Separate cache keys for verified vs unverified requests
+  - Edge caching for static page elements while keeping dynamic data server-fetched
+
+### Memory Management
+- **Rate limiter cleanup**: Automatic cleanup of expired rate limit buckets
+- **Efficient data structures**: Uses Maps and Sets for optimal lookup performance
+- **Connection pooling**: Leverages Prisma's built-in connection pooling
+
+**Section sources**
+- [rate-limit.ts:1-56](file://lib/rate-limit.ts#L1-L56)
+- [tracking.service.ts:75-87](file://server/tracking.service.ts#L75-L87)
+- [schema.prisma:183-185](file://prisma/schema.prisma#L183-L185)
+- [schema.prisma:224-225](file://prisma/schema.prisma#L224-L225)
 
 ## Troubleshooting Guide
-Common issues and resolutions:
-- Too many tracking requests: The detail page shows a rate limit alert when the IP exceeds the configured threshold. Wait briefly and retry.
-- Invalid tracking number: The page shows a friendly not-found state. Ensure the code follows the expected format and contains no typos.
-- Unknown tracking number: The page treats missing records as not found. Double-check the code and try again.
-- PII leakage concerns: The public tracking view intentionally excludes sensitive fields such as street address, contact name, phone, and price. E2E tests assert these fields are not present in the rendered page.
+Common issues and their resolutions:
 
-Operational checks:
-- Verify rate limiter configuration and consider moving to a distributed store for scaling.
-- Confirm that only public events are included in the timeline.
-- Validate that status metadata remains consistent across components.
+### Rate Limiting Issues
+- **Symptom**: "Too many tracking requests" error message
+- **Cause**: IP exceeded configured threshold within time window
+- **Resolution**: Wait briefly and retry; consider implementing request queuing for bulk operations
+
+### Invalid Tracking Numbers
+- **Symptom**: Friendly not-found state displayed
+- **Cause**: Tracking number doesn't match expected format or contains errors
+- **Resolution**: Verify code follows `TB` + 8 Base32 chars + check char format; check for typos
+
+### Unknown Tracking Numbers
+- **Symptom**: Not found state for valid-format codes
+- **Cause**: No shipment exists with the provided tracking number
+- **Resolution**: Double-check the code and try again; verify shipment was created successfully
+
+### PII Leakage Concerns
+- **Symptom**: Sensitive information appearing in public tracking view
+- **Cause**: Potential issue with field exclusion logic
+- **Resolution**: Verify public tracking response excludes street addresses, contact names, phone numbers, and prices
+
+### Performance Issues
+- **Symptom**: Slow tracking page loads or high memory usage
+- **Cause**: Excessive database queries or memory leaks in rate limiter
+- **Resolution**: Monitor rate limiter memory usage, implement caching, optimize database queries
 
 **Section sources**
 - [track detail page:56-76](file://app/track/[trackingNumber]/page.tsx#L56-L76)
@@ -406,17 +464,15 @@ Operational checks:
 - [guest tracking e2e test:8-41](file://tests/e2e/tracking.spec.ts#L8-L41)
 
 ## Conclusion
-Timberland’s public tracking system provides a secure, efficient, and user-friendly way for guests to monitor shipments. It combines robust tracking number generation and validation, a server-only service that returns a minimal public dataset, and clean UI components for status and timeline visualization. With rate limiting in place and clear extension points, teams can customize timelines, integrate tracking widgets, and add caching strategies to support higher traffic volumes.
-
-[No sources needed since this section summarizes without analyzing specific files]
+Timberland's public tracking system provides a secure, efficient, and user-friendly way for guests to monitor shipments. The system combines robust Base32 tracking number generation and validation, a server-only service that returns minimal public datasets, and clean UI components for status and timeline visualization. With comprehensive rate limiting, PII protection, and clear extension points, teams can customize timelines, integrate tracking widgets, and add caching strategies to support higher traffic volumes while maintaining security and performance.
 
 ## Appendices
 
 ### Data Model Summary Relevant to Tracking
-- Shipment: Holds tracking number, status, service level, addresses, parcels, and timestamps.
-- Parcel: Represents individual packages with weight and piece counts.
-- TrackingEvent: Stores status changes, locations, notes, and whether they are public.
-- ServiceLevel: Provides SLA days and service names used in public summaries.
+- **Shipment**: Holds tracking number, status, service level, addresses, parcels, and timestamps
+- **Parcel**: Represents individual packages with weight and piece counts
+- **TrackingEvent**: Stores status changes, locations, notes, and public visibility flags
+- **ServiceLevel**: Provides SLA days and service names used in public summaries
 
 **Section sources**
 - [schema.prisma:160-226](file://prisma/schema.prisma#L160-L226)
