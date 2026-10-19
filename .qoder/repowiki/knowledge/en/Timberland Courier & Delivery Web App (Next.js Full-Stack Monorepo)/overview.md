@@ -1,0 +1,1 @@
+A Next.js full-stack customer web app for an own-fleet courier/delivery service, supporting guest shipment tracking, authenticated quotes, shipment creation, history, and email notifications backed by PostgreSQL via Prisma.

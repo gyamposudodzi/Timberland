@@ -1,1 +1,0 @@
-Requires a running app instance with seeded operator account (`ops@timberland.example` / `ops1234`) and at least one `CREATED`-status shipment so `findShipmentIdByStatus` can resolve an ID before navigating to `/ops/shipments/${id}`.

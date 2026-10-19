@@ -1,3 +1,5 @@
+Based on my analysis of the codebase, I can see that the account dashboard has been significantly enhanced with real-time search, status-based filtering, pagination support, and summary cards. Let me now update the documentation to reflect these changes.
+
 # User Profile Management
 
 <cite>
@@ -7,11 +9,20 @@
 - [notifications.page.tsx](file://app/account/notifications/page.tsx)
 - [notification-prefs-form.tsx](file://components/account/notification-prefs-form.tsx)
 - [account.service.ts](file://server/account.service.ts)
+- [shipment-status.ts](file://lib/shipment-status.ts)
 - [notification.actions.ts](file://server/notification.actions.ts)
 - [validation.ts](file://lib/validation.ts)
 - [schema.prisma](file://prisma/schema.prisma)
 - [next-auth.d.ts](file://types/next-auth.d.ts)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated Account Dashboard section to reflect enhanced features including real-time search, status filtering, pagination, and summary cards
+- Added new sections for Search and Filtering functionality
+- Enhanced Architecture Overview diagram to show new dashboard capabilities
+- Updated Detailed Component Analysis to include advanced dashboard features
+- Added comprehensive coverage of URL query parameter handling and state management
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -28,6 +39,7 @@
 This document explains how user profile and account-related features are implemented in Timberland. It focuses on:
 - How the account area is structured and protected.
 - What user data exists in the database schema.
+- The enhanced account dashboard with real-time search, status filtering, and pagination.
 - How notifications preferences are viewed and updated.
 - The server-side service layer for reading user-owned data.
 - Validation rules that protect personal data integrity.
@@ -38,7 +50,7 @@ The goal is to help developers understand what is already implemented and where 
 ## Project Structure
 The account area is a Next.js App Router feature folder under `app/account`. It includes:
 - A layout that enforces authentication and provides navigation.
-- A dashboard page showing user shipments.
+- An enhanced dashboard page showing user shipments with search, filtering, and pagination.
 - A notifications page with a client form backed by a server action.
 - Shared UI components for forms and feedback.
 
@@ -46,103 +58,104 @@ The account area is a Next.js App Router feature folder under `app/account`. It 
 graph TB
 subgraph "Account Area"
 Layout["Account Layout<br/>auth check + nav"]
-Dashboard["Account Dashboard<br/>shipments overview"]
+Dashboard["Enhanced Account Dashboard<br/>search + filter + paginate"]
 Notifications["Notifications Page<br/>preferences loader"]
 PrefsForm["Notification Prefs Form<br/>client form"]
 end
 subgraph "Server Layer"
-AccountService["Account Service<br/>read-only queries"]
+AccountService["Account Service<br/>searchable + paginated queries"]
 NotificationActions["Notification Actions<br/>update preferences"]
 end
 subgraph "Data & Validation"
 Schema["Prisma Schema<br/>User, Address, Shipment,<br/>NotificationPreference"]
 Validation["Validation Schemas<br/>Zod schemas"]
+StatusLib["Shipment Status Library<br/>status definitions + metadata"]
 end
 Layout --> Dashboard
 Layout --> Notifications
-Notifications --> PrefsForm
 Dashboard --> AccountService
+Notifications --> PrefsForm
 PrefsForm --> NotificationActions
 AccountService --> Schema
 NotificationActions --> Schema
 NotificationActions --> Validation
+AccountService --> StatusLib
 ```
 
 **Diagram sources**
 - [account.layout.tsx:13-38](file://app/account/layout.tsx#L13-L38)
-- [account.page.tsx:12-97](file://app/account/page.tsx#L12-L97)
+- [account.page.tsx:20-218](file://app/account/page.tsx#L20-L218)
 - [notifications.page.tsx:18-39](file://app/account/notifications/page.tsx#L18-L39)
 - [notification-prefs-form.tsx:16-63](file://components/account/notification-prefs-form.tsx#L16-L63)
-- [account.service.ts:5-51](file://server/account.service.ts#L5-L51)
+- [account.service.ts:23-61](file://server/account.service.ts#L23-L61)
 - [notification.actions.ts:8-28](file://server/notification.actions.ts#L8-L28)
 - [schema.prisma:57-78](file://prisma/schema.prisma#L57-L78)
 - [schema.prisma:232-244](file://prisma/schema.prisma#L232-L244)
-- [validation.ts:77-80](file://lib/validation.ts#L77-L80)
+- [shipment-status.ts:9-77](file://lib/shipment-status.ts#L9-L77)
 
 **Section sources**
 - [account.layout.tsx:1-39](file://app/account/layout.tsx#L1-L39)
-- [account.page.tsx:1-98](file://app/account/page.tsx#L1-L98)
+- [account.page.tsx:1-218](file://app/account/page.tsx#L1-L218)
 - [notifications.page.tsx:1-40](file://app/account/notifications/page.tsx#L1-L40)
 - [notification-prefs-form.tsx:1-64](file://components/account/notification-prefs-form.tsx#L1-L64)
 
 ## Core Components
 - Account layout: Protects all account routes by requiring an authenticated session and renders a sidebar with links to Dashboard, New shipment, Addresses, and Notifications.
-- Account dashboard: Displays a welcome message using the session user name and lists the user’s shipments with summary counts.
+- **Enhanced Account Dashboard**: Displays personalized greeting, summary cards (Total, In progress, Delivered), real-time search by tracking number, status-based filtering with URL query parameters, and paginated shipment list.
 - Notifications page: Loads the current email notification preference for the signed-in user and passes it to a client form.
 - Notification preferences form: Client component that submits enabled state and selected event types via a server action.
-- Account service: Server-only functions for listing and retrieving user-owned shipments and saved addresses.
+- **Enhanced Account Service**: Server-only functions for searchable, filterable, and paginated listing of user-owned shipments plus summary statistics.
 - Notification actions: Server action that validates and persists notification preferences.
 - Validation schemas: Zod schemas for signup, login, address, parcel, shipment, quote, and notification preferences.
+- **Shipment Status Library**: Centralized definition of shipment lifecycle states, transitions, and metadata used across the application.
 - Prisma schema: Defines the User, Address, Shipment, Parcel, TrackingEvent, NotificationPreference, and related models.
 
 Key responsibilities:
 - Authentication gating at the layout level.
-- Read-only access to user data through the account service.
+- **Advanced dashboard with real-time search, status filtering, and pagination**.
+- Read-only access to user data through the enhanced account service.
 - Controlled updates through server actions with validation.
 - Data integrity enforced by Zod and Prisma constraints.
 
 **Section sources**
 - [account.layout.tsx:13-38](file://app/account/layout.tsx#L13-L38)
-- [account.page.tsx:12-97](file://app/account/page.tsx#L12-L97)
+- [account.page.tsx:20-218](file://app/account/page.tsx#L20-L218)
 - [notifications.page.tsx:18-39](file://app/account/notifications/page.tsx#L18-L39)
 - [notification-prefs-form.tsx:16-63](file://components/account/notification-prefs-form.tsx#L16-L63)
-- [account.service.ts:5-51](file://server/account.service.ts#L5-L51)
+- [account.service.ts:23-61](file://server/account.service.ts#L23-L61)
 - [notification.actions.ts:8-28](file://server/notification.actions.ts#L8-L28)
+- [shipment-status.ts:9-77](file://lib/shipment-status.ts#L9-L77)
 - [validation.ts:77-80](file://lib/validation.ts#L77-L80)
 - [schema.prisma:57-78](file://prisma/schema.prisma#L57-L78)
 - [schema.prisma:232-244](file://prisma/schema.prisma#L232-L244)
 
 ## Architecture Overview
-The account area follows a layered architecture:
-- Presentation layer: Next.js pages and client components render user-facing views.
+The account area follows a layered architecture with enhanced dashboard capabilities:
+- Presentation layer: Next.js pages and client components render user-facing views with advanced filtering and search.
 - Server actions: Mutate data securely on the server after validation.
-- Service layer: Encapsulates read operations and ownership checks.
+- **Enhanced service layer**: Encapsulates searchable, filterable, and paginated read operations with ownership checks.
 - Data layer: Prisma client interacts with PostgreSQL.
 
 ```mermaid
 sequenceDiagram
 participant Browser as "Browser"
-participant Page as "Notifications Page"
-participant Form as "Notification Prefs Form"
-participant Action as "updateNotificationPrefsAction"
+participant Dashboard as "Enhanced Dashboard"
+participant Service as "Account Service"
 participant DB as "PostgreSQL"
-Browser->>Page : Load /account/notifications
-Page->>DB : Query NotificationPreference for user
-DB-->>Page : Preference row or null
-Page->>Form : Render initialEnabled and initialEvents
-Form->>Action : Submit FormData (enabled, events[])
-Action->>Action : Validate with notificationPrefsSchema
-Action->>DB : upsert NotificationPreference
-DB-->>Action : Persisted preference
-Action-->>Form : { ok : true }
-Form-->>Browser : Show success alert
+Browser->>Dashboard : Load /account?q=TRACKING&status=ACTIVE&page=1
+Dashboard->>Service : listMyShipments(userId, {q, status, page})
+Service->>DB : Query with WHERE clauses + pagination
+DB-->>Service : Paginated results + total count
+Service-->>Dashboard : {shipments, total, page, pageCount}
+Dashboard->>DB : getMyShipmentSummary(userId)
+DB-->>Dashboard : Summary counts (total, active, delivered)
+Dashboard-->>Browser : Render cards, search, filters, pagination
 ```
 
 **Diagram sources**
-- [notifications.page.tsx:18-39](file://app/account/notifications/page.tsx#L18-L39)
-- [notification-prefs-form.tsx:16-63](file://components/account/notification-prefs-form.tsx#L16-L63)
-- [notification.actions.ts:8-28](file://server/notification.actions.ts#L8-L28)
-- [schema.prisma:232-244](file://prisma/schema.prisma#L232-L244)
+- [account.page.tsx:20-37](file://app/account/page.tsx#L20-L37)
+- [account.service.ts:23-61](file://server/account.service.ts#L23-L61)
+- [account.service.ts:72-91](file://server/account.service.ts#L72-L91)
 
 ## Detailed Component Analysis
 
@@ -167,35 +180,161 @@ RenderLayout --> End(["Response"])
 **Section sources**
 - [account.layout.tsx:1-39](file://app/account/layout.tsx#L1-L39)
 
-### Account Dashboard
-The dashboard displays a personalized greeting and summarizes the user’s shipments.
+### Enhanced Account Dashboard
+The dashboard now provides a comprehensive shipment management interface with advanced search, filtering, and pagination capabilities.
 
-- Session usage: Reads `session.user.name` for greeting.
-- Data loading: Calls `listMyShipments` with the authenticated user ID.
-- Summary metrics: Computes active and delivered counts from the returned list.
-- Empty state: Shows a call-to-action when no shipments exist.
+**Updated** The dashboard has been significantly enhanced with:
+- **Real-time search by tracking number**: Users can search shipments using a dedicated search form that preserves other filter states.
+- **Status-based filtering**: Interactive status chips allow filtering by shipment status (All, In progress, or specific statuses).
+- **URL query parameter synchronization**: All filters and search terms are reflected in the URL for bookmarking and sharing.
+- **Pagination support**: Shipments are paginated with 8 items per page, with previous/next navigation.
+- **Summary cards**: Three prominent cards show Total, In progress, and Delivered shipment counts with clickable filters.
+- **Dynamic status chips**: Only statuses that have shipments are displayed, providing contextual filtering options.
 
 ```mermaid
 flowchart TD
 Entry(["Account Dashboard"]) --> LoadSession["Load session"]
 LoadSession --> CheckUser{"User ID present?"}
 CheckUser --> |No| NotFound["notFound()"]
-CheckUser --> |Yes| LoadShipments["listMyShipments(userId)"]
-LoadShipments --> ComputeMetrics["Compute active/delivered counts"]
-ComputeMetrics --> RenderUI["Render cards and shipment list"]
+CheckUser --> |Yes| ParseParams["Parse URL params (q, status, page)"]
+ParseParams --> ParallelLoad["Parallel API calls"]
+ParallelLoad --> Summary["getMyShipmentSummary(userId)"]
+ParallelLoad --> List["listMyShipments(userId, {q, status, page})"]
+Summary --> Cards["Build summary cards"]
+List --> FilterChips["Build dynamic status chips"]
+Cards --> RenderUI["Render complete dashboard"]
+FilterChips --> RenderUI
 RenderUI --> Exit(["Response"])
 ```
 
 **Diagram sources**
-- [account.page.tsx:12-97](file://app/account/page.tsx#L12-L97)
-- [account.service.ts:5-21](file://server/account.service.ts#L5-L21)
+- [account.page.tsx:20-47](file://app/account/page.tsx#L20-L47)
+- [account.service.ts:23-61](file://server/account.service.ts#L23-L61)
+- [account.service.ts:72-91](file://server/account.service.ts#L72-L91)
 
 **Section sources**
-- [account.page.tsx:1-98](file://app/account/page.tsx#L1-L98)
-- [account.service.ts:5-21](file://server/account.service.ts#L5-L21)
+- [account.page.tsx:1-218](file://app/account/page.tsx#L1-L218)
+- [account.service.ts:23-61](file://server/account.service.ts#L23-L61)
+- [account.service.ts:72-91](file://server/account.service.ts#L72-L91)
+
+### Search and Filtering System
+The dashboard implements a sophisticated search and filtering system that maintains state through URL query parameters.
+
+**Search Functionality:**
+- Real-time search input for tracking numbers with visual search icon
+- Search term preservation across filter changes
+- Clear button to reset search while maintaining other filters
+- Case-insensitive tracking number matching on server side
+
+**Status Filtering:**
+- Dynamic status chips based on actual shipment data
+- "All" chip shows total count
+- "In progress" chip aggregates non-terminal statuses
+- Individual status chips show counts from summary data
+- Active status highlighting with visual feedback
+
+**URL State Management:**
+- Query parameters: `?q=searchTerm&status=STATUS&page=1`
+- Helper function `buildQuery()` manages parameter construction
+- Preserves existing filters when navigating between pages
+- Clean URL structure for bookmarking and sharing
+
+```mermaid
+flowchart TD
+Input["User Input"] --> SearchForm["Search Form"]
+Input --> StatusChip["Status Chip Click"]
+SearchForm --> BuildQuery["buildQuery({q, status})"]
+StatusChip --> BuildQuery
+BuildQuery --> URLUpdate["Update URL Parameters"]
+URLUpdate --> ServerSide["Server-side Processing"]
+ServerSide --> WhereClause["Prisma WHERE clause"]
+WhereClause --> Pagination["Apply pagination"]
+Pagination --> Results["Return filtered results"]
+```
+
+**Diagram sources**
+- [account.page.tsx:13-18](file://app/account/page.tsx#L13-L18)
+- [account.page.tsx:89-144](file://app/account/page.tsx#L89-L144)
+- [account.service.ts:14-20](file://server/account.service.ts#L14-L20)
+
+**Section sources**
+- [account.page.tsx:13-18](file://app/account/page.tsx#L13-L18)
+- [account.page.tsx:89-144](file://app/account/page.tsx#L89-L144)
+- [account.service.ts:14-20](file://server/account.service.ts#L14-L20)
+
+### Pagination System
+The dashboard implements robust pagination with configurable page sizes and intelligent navigation.
+
+**Pagination Features:**
+- Configurable page size (default 8, max 50)
+- Previous/Next navigation buttons
+- Page counter display ("Page X of Y")
+- Range indicator ("Showing X-Y of Z")
+- Preserves search and filter state across pages
+- Safe page number validation and bounds checking
+
+**Implementation Details:**
+- Server-side pagination with Prisma's `skip` and `take`
+- Transactional query for performance optimization
+- Page count calculation with minimum of 1
+- Bounds checking for edge cases
+
+```mermaid
+flowchart TD
+PageParam["Page Parameter"] --> Validate["Validate & Sanitize"]
+Validate --> CalculateSkip["Calculate skip offset"]
+CalculateSkip --> Query["Execute paginated query"]
+Query --> CalculateCount["Calculate page count"]
+CalculateCount --> Return["Return pagination metadata"]
+```
+
+**Diagram sources**
+- [account.service.ts:30-60](file://server/account.service.ts#L30-L60)
+
+**Section sources**
+- [account.page.tsx:185-210](file://app/account/page.tsx#L185-L210)
+- [account.service.ts:30-60](file://server/account.service.ts#L30-L60)
+
+### Summary Cards and Statistics
+The dashboard displays three primary summary cards that provide at-a-glance insights into shipment status distribution.
+
+**Card Types:**
+- **Total**: Shows total number of shipments with link to clear filters
+- **In Progress**: Aggregates all non-terminal statuses with direct filter link
+- **Delivered**: Shows completed deliveries with status filter link
+
+**Data Source:**
+- Uses `getMyShipmentSummary()` for accurate counts
+- Groups shipments by status using Prisma's `groupBy`
+- Calculates active count by summing non-terminal statuses
+- Provides detailed breakdown by individual status
+
+```mermaid
+classDiagram
+class SummaryCards {
++total : number
++active : number
++delivered : number
++byStatus : Record~ShipmentStatus, number~
+}
+class CardComponent {
++label : string
++value : number
++href : string
+}
+SummaryCards --> CardComponent : "generates"
+```
+
+**Diagram sources**
+- [account.page.tsx:39-43](file://app/account/page.tsx#L39-L43)
+- [account.service.ts:63-91](file://server/account.service.ts#L63-L91)
+
+**Section sources**
+- [account.page.tsx:39-43](file://app/account/page.tsx#L39-L43)
+- [account.service.ts:63-91](file://server/account.service.ts#L63-L91)
 
 ### Notifications Page and Preferences Form
-The notifications page loads the user’s email notification preferences and renders a form to update them.
+The notifications page loads the user's email notification preferences and renders a form to update them.
 
 - Data loading: Queries `NotificationPreference` for the current user and channel.
 - Options mapping: Maps status codes to labels using shared status metadata.
@@ -232,28 +371,59 @@ NotificationPrefsForm --> UpdateNotificationPrefsAction : "submits"
 - [notification-prefs-form.tsx:1-64](file://components/account/notification-prefs-form.tsx#L1-L64)
 - [notification.actions.ts:1-29](file://server/notification.actions.ts#L1-L29)
 
-### Account Service Layer
-The account service provides read-only access to user-owned data.
+### Enhanced Account Service Layer
+The account service now provides comprehensive searchable, filterable, and paginated access to user-owned data.
 
-- `listMyShipments`: Returns summary rows for the dashboard.
-- `getMyShipment`: Enforces ownership by filtering on `userId`.
-- `getSavedAddresses`: Retrieves the user’s saved addresses with zone info.
+**New Capabilities:**
+- **Searchable queries**: Supports tracking number search with case-insensitive matching
+- **Status filtering**: Filters by specific statuses or "ACTIVE" for non-terminal states
+- **Pagination**: Built-in pagination with configurable page sizes and safe bounds checking
+- **Transaction optimization**: Uses Prisma transactions for efficient counting and querying
+- **Summary statistics**: Provides aggregated counts and status breakdowns
 
 ```mermaid
 flowchart TD
-Input["userId"] --> List["listMyShipments"]
-Input --> Detail["getMyShipment(userId, id)"]
-Input --> Saved["getSavedAddresses(userId)"]
-List --> OutputList["Shipments summary"]
-Detail --> OutputDetail["Full shipment detail"]
-Saved --> OutputSaved["Saved addresses"]
+Input["userId + filters"] --> QueryBuilder["Build WHERE clause"]
+QueryBuilder --> StatusFilter["Apply status filter"]
+QueryBuilder --> SearchFilter["Apply search filter"]
+SearchFilter --> Pagination["Apply pagination"]
+Pagination --> Execute["Execute transaction"]
+Execute --> Count["Count total matches"]
+Execute --> Fetch["Fetch paginated results"]
+Count --> Combine["Combine results"]
+Fetch --> Combine
+Combine --> Output["Return enriched response"]
 ```
 
 **Diagram sources**
-- [account.service.ts:5-51](file://server/account.service.ts#L5-L51)
+- [account.service.ts:23-61](file://server/account.service.ts#L23-L61)
 
 **Section sources**
-- [account.service.ts:1-52](file://server/account.service.ts#L1-L52)
+- [account.service.ts:1-122](file://server/account.service.ts#L1-L122)
+
+### Shipment Status Library
+A centralized library defining shipment lifecycle states, transitions, and metadata used throughout the application.
+
+**Key Features:**
+- Complete status enumeration with type safety
+- Valid transition rules between states
+- Terminal vs. non-terminal status classification
+- Rich metadata with labels, descriptions, and tone indicators
+- Utility functions for status validation and manipulation
+
+```mermaid
+flowchart TD
+StatusEnum["SHIPMENT_STATUSES"] --> Transitions["Transition Rules"]
+Transitions --> Classification["Terminal/Non-terminal"]
+Classification --> Metadata["Status Metadata"]
+Metadata --> Utilities["Utility Functions"]
+```
+
+**Diagram sources**
+- [shipment-status.ts:9-77](file://lib/shipment-status.ts#L9-L77)
+
+**Section sources**
+- [shipment-status.ts:1-77](file://lib/shipment-status.ts#L1-L77)
 
 ### Validation Rules and Data Integrity
 Validation schemas define acceptable inputs and constraints for user-provided data.
@@ -369,11 +539,12 @@ Session --> User : "contains"
 - [next-auth.d.ts:1-23](file://types/next-auth.d.ts#L1-L23)
 
 ## Dependency Analysis
-The following diagram shows key dependencies between presentation, server actions, services, and data layers.
+The following diagram shows key dependencies between presentation, server actions, services, and data layers with enhanced dashboard capabilities.
 
 ```mermaid
 graph LR
-Dashboard["Account Dashboard"] --> AccountService["Account Service"]
+Dashboard["Enhanced Account Dashboard"] --> AccountService["Enhanced Account Service"]
+Dashboard --> StatusLib["Shipment Status Library"]
 Notifications["Notifications Page"] --> PrefsForm["Notification Prefs Form"]
 PrefsForm --> NotificationActions["Notification Actions"]
 NotificationActions --> Validation["Validation Schemas"]
@@ -382,8 +553,9 @@ NotificationActions --> Schema
 ```
 
 **Diagram sources**
-- [account.page.tsx:12-97](file://app/account/page.tsx#L12-L97)
-- [account.service.ts:5-51](file://server/account.service.ts#L5-L51)
+- [account.page.tsx:20-218](file://app/account/page.tsx#L20-L218)
+- [account.service.ts:23-61](file://server/account.service.ts#L23-L61)
+- [shipment-status.ts:9-77](file://lib/shipment-status.ts#L9-L77)
 - [notifications.page.tsx:18-39](file://app/account/notifications/page.tsx#L18-L39)
 - [notification-prefs-form.tsx:16-63](file://components/account/notification-prefs-form.tsx#L16-L63)
 - [notification.actions.ts:8-28](file://server/notification.actions.ts#L8-L28)
@@ -391,8 +563,9 @@ NotificationActions --> Schema
 - [schema.prisma:232-244](file://prisma/schema.prisma#L232-L244)
 
 **Section sources**
-- [account.page.tsx:1-98](file://app/account/page.tsx#L1-L98)
-- [account.service.ts:1-52](file://server/account.service.ts#L1-L52)
+- [account.page.tsx:1-218](file://app/account/page.tsx#L1-L218)
+- [account.service.ts:1-122](file://server/account.service.ts#L1-L122)
+- [shipment-status.ts:1-77](file://lib/shipment-status.ts#L1-L77)
 - [notifications.page.tsx:1-40](file://app/account/notifications/page.tsx#L1-L40)
 - [notification-prefs-form.tsx:1-64](file://components/account/notification-prefs-form.tsx#L1-L64)
 - [notification.actions.ts:1-29](file://server/notification.actions.ts#L1-L29)
@@ -400,36 +573,44 @@ NotificationActions --> Schema
 - [schema.prisma:1-261](file://prisma/schema.prisma#L1-L261)
 
 ## Performance Considerations
-- Server-only reads: The account service uses Prisma with selective field projection to reduce payload size for the dashboard.
-- Minimal mutations: Notification preferences use upsert to avoid unnecessary writes when data has not changed.
-- Client-side pending state: The form disables submit while pending to prevent duplicate submissions.
-- No client-side caching: Currently, there is no explicit cache invalidation; re-renders occur on successful submission via React Server Actions.
-
-[No sources needed since this section provides general guidance]
+- **Enhanced server-only reads**: The account service uses Prisma with selective field projection and transactional queries to optimize dashboard performance.
+- **Efficient pagination**: Uses Prisma's native pagination with calculated offsets and bounded page sizes.
+- **Minimal mutations**: Notification preferences use upsert to avoid unnecessary writes when data has not changed.
+- **Client-side pending state**: The form disables submit while pending to prevent duplicate submissions.
+- **Parallel data loading**: Dashboard loads summary and shipment data concurrently using Promise.all.
+- **Optimized status filtering**: Leverages Prisma's groupBy for efficient status aggregation.
+- **No client-side caching**: Currently, there is no explicit cache invalidation; re-renders occur on successful submission via React Server Actions.
 
 ## Troubleshooting Guide
 Common issues and recovery patterns:
 - Unauthenticated access: The account layout redirects to `/login`; ensure the session is established before accessing account routes.
-- Invalid preferences: The notification action returns a failure result if validation fails; the form displays an error alert.
-- Missing user preference: If no preference exists, the notifications page defaults to enabled and all events; the form will create a new preference on save.
-- Duplicate unique constraints: When extending to other mutations, handle Prisma unique constraint errors similarly to existing patterns.
+- **Invalid search parameters**: The dashboard handles malformed page numbers and out-of-bounds values gracefully with default fallbacks.
+- **Empty filter results**: When no shipments match the current filters, a helpful message is displayed instead of breaking the UI.
+- **Invalid preferences**: The notification action returns a failure result if validation fails; the form displays an error alert.
+- **Missing user preference**: If no preference exists, the notifications page defaults to enabled and all events; the form will create a new preference on save.
+- **Duplicate unique constraints**: When extending to other mutations, handle Prisma unique constraint errors similarly to existing patterns.
 
 Operational tips:
 - Always validate incoming data with Zod before persisting.
 - Use server actions for mutations to keep business logic secure and centralized.
 - Provide clear user feedback using alerts and spinner states.
+- **Test URL parameter combinations thoroughly** to ensure proper state persistence across navigation.
+- **Monitor query performance** when adding new filter criteria to maintain responsive dashboard experience.
 
 **Section sources**
 - [account.layout.tsx:13-15](file://app/account/layout.tsx#L13-L15)
+- [account.page.tsx:30-32](file://app/account/page.tsx#L30-L32)
+- [account.page.tsx:146-149](file://app/account/page.tsx#L146-L149)
 - [notification.actions.ts:12-19](file://server/notification.actions.ts#L12-L19)
 - [notification-prefs-form.tsx:25-33](file://components/account/notification-prefs-form.tsx#L25-L33)
 
 ## Conclusion
-Timberland currently implements a solid foundation for account-related functionality:
+Timberland currently implements a solid foundation for account-related functionality with significant enhancements:
 - Protected account routes with a clear navigation structure.
-- A dashboard that surfaces user shipment summaries.
+- **Enhanced dashboard with real-time search, status filtering, pagination, and summary cards**.
 - A notifications preferences flow with robust validation and persistence.
-- A service layer for safe, owned-data reads.
+- **Advanced service layer for searchable, filterable, and paginated data access**.
+- Centralized shipment status management with rich metadata.
 
 To complete user profile management, consider adding:
 - A profile edit page to update name, phone, and other user fields.
@@ -437,6 +618,4 @@ To complete user profile management, consider adding:
 - Privacy controls for visibility of personal data.
 - Optimistic updates and error recovery patterns for smoother UX.
 
-These extensions should follow the existing patterns: server actions for mutations, Zod for validation, Prisma for data integrity, and client components for responsive UI feedback.
-
-[No sources needed since this section summarizes without analyzing specific files]
+These extensions should follow the existing patterns: server actions for mutations, Zod for validation, Prisma for data integrity, and client components for responsive UI feedback. The enhanced dashboard architecture provides a strong foundation for implementing additional interactive features.

@@ -1,3 +1,0 @@
-- User interactions with server-action forms use the local `submitUntil` helper which retries the button click once when the success text does not appear within the first timeout window.
-- Authentication is performed by filling email/password fields and waiting for the URL to leave `/login`, with a fallback resubmit path to handle hydration races.
-- Cross-page assertions (e.g. verifying public tracking reflects ops updates) extract the shipment code from the current page and navigate to `/track/${code}` rather than sharing state between pages.

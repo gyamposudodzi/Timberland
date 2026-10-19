@@ -1,0 +1,6 @@
+- Server-side data mutations go through `"use server"` functions in `server/*.actions.ts` that return a typed `{ ok, error }` result shape rather than throwing, and delegate business logic to sibling `*.service.ts` modules.
+- All user inputs are validated with Zod schemas defined in `lib/validation.ts` inside server actions before any Prisma mutation, with errors surfaced back to the form via the action result.
+- Authentication state is accessed through the shared `auth()` helper from `@/lib/auth`, which wraps NextAuth and injects `user.id` / `user.role` into the session via the edge-safe `jwt`/`session` callbacks in `lib/auth.config.ts`.
+- Database access is centralized on the single `prisma` singleton exported from `@/lib/db`; no other module imports `@prisma/client` directly.
+- Route-level authorization is handled centrally in the NextAuth `authorized` callback (blocking `/account*` unless logged in) rather than per-page checks, with the middleware matcher limited to `/account/:path*`.
+- Domain models in `prisma/schema.prisma` use `cuid()` defaults for IDs, `DateTime` timestamps with `@default(now())` / `@updatedAt`, and explicit indexes on frequently queried columns (userId, status, createdAt, postalCode).

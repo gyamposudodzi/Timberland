@@ -1,1 +1,0 @@
-Next.js 16 App Router + React 19, Tailwind CSS v4 via `@tailwindcss/turbopack`, Prisma 6 with PostgreSQL, NextAuth v5 beta (JWT strategy, Prisma adapter), Zod v4 for validation, Playwright for E2E tests, Vitest for unit tests, tsx for Prisma seed.

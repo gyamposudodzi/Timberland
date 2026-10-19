@@ -51,4 +51,22 @@ test.describe("registered customer shipment flow", () => {
     await expect(body).not.toContainText("+1 555 0999");
     await expect(body).not.toContainText("Newton Test");
   });
+
+  test("copies a saved address into the recipient fields via the picker", async ({ page }) => {
+    await login(page);
+    await page.goto("/account/new-shipment");
+
+    const select = page.locator("#recipient-saved");
+    await expect(select).toBeVisible();
+
+    // Option 0 is the placeholder; pick the first real saved address.
+    const value = await page.locator("#recipient-saved option").nth(1).getAttribute("value");
+    expect(value).toBeTruthy();
+    await select.selectOption(value!);
+
+    // The controlled recipient fields are populated from the saved address.
+    await expect(page.locator("#recipient-city")).not.toHaveValue("");
+    await expect(page.locator("#recipient-contactName")).not.toHaveValue("");
+    await expect(page.locator("#recipient-postalCode")).not.toHaveValue("");
+  });
 });

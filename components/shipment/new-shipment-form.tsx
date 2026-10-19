@@ -25,6 +25,11 @@ interface AddressValue {
   country: string;
 }
 
+interface SavedAddressValue extends AddressValue {
+  id: string;
+  label: string | null;
+}
+
 interface ParcelValue {
   description: string;
   weightKg: string;
@@ -49,15 +54,49 @@ function AddressFields({
   idPrefix,
   value,
   onChange,
+  addresses,
 }: {
   idPrefix: string;
   value: AddressValue;
   onChange: (v: AddressValue) => void;
+  addresses: SavedAddressValue[];
 }) {
+  const [pick, setPick] = useState("");
   const set = (k: keyof AddressValue) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onChange({ ...value, [k]: e.target.value });
+
+  function applyPick(e: React.ChangeEvent<HTMLSelectElement>) {
+    const a = addresses.find((x) => x.id === e.target.value);
+    setPick("");
+    if (!a) return;
+    onChange({
+      contactName: a.contactName,
+      phone: a.phone,
+      line1: a.line1,
+      line2: a.line2,
+      city: a.city,
+      region: a.region,
+      postalCode: a.postalCode,
+      country: a.country,
+    });
+  }
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div>
+      {addresses.length > 0 && (
+        <Field label="Copy from saved" htmlFor={`${idPrefix}-saved`} className="mb-4">
+          <Select id={`${idPrefix}-saved`} value={pick} onChange={applyPick}>
+            <option value="">Select a saved address…</option>
+            {addresses.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.label ? `${a.label} — ` : ""}
+                {a.contactName}, {a.city}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )}
+      <div className="grid gap-4 sm:grid-cols-2">
       <Field label="Contact name" htmlFor={`${idPrefix}-contactName`} required>
         <Input id={`${idPrefix}-contactName`} value={value.contactName} onChange={set("contactName")} />
       </Field>
@@ -82,6 +121,7 @@ function AddressFields({
       <Field label="Country" htmlFor={`${idPrefix}-country`} required>
         <Input id={`${idPrefix}-country`} value={value.country} onChange={set("country")} maxLength={2} />
       </Field>
+      </div>
     </div>
   );
 }
@@ -89,9 +129,11 @@ function AddressFields({
 export function NewShipmentForm({
   services,
   defaultSender,
+  savedAddresses,
 }: {
   services: { code: string; name: string; slaDays: number }[];
   defaultSender: AddressValue | null;
+  savedAddresses: SavedAddressValue[];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -188,12 +230,12 @@ export function NewShipmentForm({
 
       <section className="rounded-lg border border-border p-5">
         <h2 className="mb-4 text-lg font-semibold">From (sender)</h2>
-        <AddressFields idPrefix="sender" value={sender} onChange={setSender} />
+        <AddressFields idPrefix="sender" value={sender} onChange={setSender} addresses={savedAddresses} />
       </section>
 
       <section className="rounded-lg border border-border p-5">
         <h2 className="mb-4 text-lg font-semibold">To (recipient)</h2>
-        <AddressFields idPrefix="recipient" value={recipient} onChange={setRecipient} />
+        <AddressFields idPrefix="recipient" value={recipient} onChange={setRecipient} addresses={savedAddresses} />
       </section>
 
       <section className="rounded-lg border border-border p-5">

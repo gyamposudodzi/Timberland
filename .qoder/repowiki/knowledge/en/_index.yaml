@@ -3,24 +3,12 @@ schema_version: 1
 locale: en-US
 branch: main
 nodes_managed: true
-exported_at: "2026-10-18T22:31:33Z"
+exported_at: "2026-10-19T00:03:08Z"
 modules:
     "":
-        dir_name: Timberland Shipping Next.js App
-        title: Timberland Shipping Next.js App
+        dir_name: Timberland Courier & Delivery Web App (Next.js Full-Stack Monorepo)
+        title: Timberland Courier & Delivery Web App (Next.js Full-Stack Monorepo)
         scope: []
-        source_files: []
-        children:
-            - ops
-        depends_on: []
-        related_to: []
-    ops:
-        dir_name: Operations Back Office E2E Tests
-        title: Operations Back Office E2E Tests
-        scope:
-            - app/ops/
-            - components/ops/
-            - tests/e2e/ops.spec.ts
         source_files: []
         children: []
         depends_on: []

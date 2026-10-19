@@ -1,1 +1,0 @@
-Next.js full-stack customer-facing courier/delivery platform where guests can track shipments and registered users create quotes, shipments, and manage notifications on PostgreSQL.

@@ -1,9 +1,0 @@
-Monolithic Next.js 16 app using the App Router as the primary boundary between layers:
-- `app/` — Route handlers and React Server Components; public pages (`track`, `pricing`, `quote`) are guest-accessible while `/account/*` is guarded by the NextAuth middleware in `middleware.ts`.
-- `components/` — Presentational UI split into domain folders (`auth`, `shipment`, `tracking`, `ops`, `quote`) plus a shared `ui/` primitive layer built with Tailwind v4 + class-variance-authority.
-- `server/` — Server Actions (`*.actions.ts`) that own mutations; thin `*.service.ts` modules hold pure business logic (e.g. `account.service.ts`, `ops.service.ts`, `tracking.service.ts`).
-- `lib/` — Framework-agnostic utilities: Prisma client singleton (`db.ts`), NextAuth edge-safe config (`auth.config.ts` merged in `auth.ts`), Zod schemas (`validation.ts`), pricing/rating engine (`pricing.ts`, `rate-limit.ts`), notification dispatch (`notifications.ts`), tracking-number generation, zone matching, and crypto helpers.
-- `prisma/schema.prisma` — Single source of truth for PostgreSQL models (`User`, `ServiceZone`, `ServiceLevel`, `RateRule`, `Address`, `Shipment`, `Parcel`, `TrackingEvent`, `NotificationPreference`, `NotificationLog`) with enums for `Role`, `ShipmentStatus`, `PaymentMethod`, `NotificationChannel`, `NotificationLogStatus`.
-- `types/next-auth.d.ts` augments NextAuth's session shape with `id` and `role`.
-
-Dependency direction is strictly inward: `app` → `server` → `lib` → Prisma; server actions never import from `app`. The auth pipeline separates an edge-safe config (`lib/auth.config.ts`, consumed by `middleware.ts`) from the Node runtime provider setup (`lib/auth.ts`), keeping Prisma/bcrypt/nodemailer out of the edge bundle.

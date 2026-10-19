@@ -12,6 +12,10 @@
 - [auth.spec.ts](file://tests/e2e/auth.spec.ts)
 - [shipping.spec.ts](file://tests/e2e/shipping.spec.ts)
 - [tracking.spec.ts](file://tests/e2e/tracking.spec.ts)
+- [address-crud.spec.ts](file://tests/e2e/address-crud.spec.ts)
+- [password-reset.spec.ts](file://tests/e2e/password-reset.spec.ts)
+- [dashboard.spec.ts](file://tests/e2e/dashboard.spec.ts)
+- [ops.spec.ts](file://tests/e2e/ops.spec.ts)
 - [helpers.ts](file://tests/e2e/helpers.ts)
 - [pricing.ts](file://lib/pricing.ts)
 - [shipment-status.ts](file://lib/shipment-status.ts)
@@ -20,11 +24,12 @@
 
 ## Update Summary
 **Changes Made**
-- Enhanced unit testing section with detailed coverage of pricing calculations, shipment status logic, and tracking number utilities
-- Expanded E2E testing section with comprehensive authentication, shipping workflow, and tracking test scenarios
-- Added detailed mocking strategies and assertion patterns used throughout the test suite
-- Updated CI/CD integration section with specific database seeding and Prisma client generation steps
-- Enhanced troubleshooting guide with specific debugging techniques for both Vitest and Playwright
+- Added comprehensive E2E testing coverage for address CRUD operations including create, edit, delete, and validation scenarios
+- Expanded password reset flow testing with single-use token validation and security edge cases
+- Enhanced dashboard functionality testing with status filtering and search capabilities
+- Added back office operations testing for role-based access control and shipment management
+- Updated E2E test architecture diagrams to reflect the expanded test coverage
+- Enhanced troubleshooting guide with new test-specific debugging techniques
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -38,7 +43,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains Timberland's comprehensive testing strategy, which uses Vitest for unit tests and Playwright for end-to-end (E2E) tests. The testing suite covers critical business logic including pricing calculations, shipment state management, and tracking number generation, while E2E tests validate complete user flows such as authentication, shipment creation, and package tracking. It covers test organization, naming conventions, patterns, mocking strategies, assertion styles, coverage guidance, CI/CD integration, and debugging techniques. The goal is to help contributors write reliable tests that ensure application reliability across all major features.
+This document explains Timberland's comprehensive testing strategy, which uses Vitest for unit tests and Playwright for end-to-end (E2E) tests. The testing suite covers critical business logic including pricing calculations, shipment state management, and tracking number generation, while E2E tests validate complete user flows such as authentication, shipment creation, address management, password reset, dashboard operations, and package tracking. It covers test organization, naming conventions, patterns, mocking strategies, assertion styles, coverage guidance, CI/CD integration, and debugging techniques. The goal is to help contributors write reliable tests that ensure application reliability across all major features.
 
 ## Project Structure
 The repository separates unit tests from E2E tests with clear organizational boundaries:
@@ -59,6 +64,10 @@ PW["playwright.config.ts"]
 EA["auth.spec.ts<br/>Authentication flows"]
 ES["shipping.spec.ts<br/>Shipping workflows"]
 ET["tracking.spec.ts<br/>Tracking functionality"]
+ECRUD["address-crud.spec.ts<br/>Address CRUD operations"]
+EPW["password-reset.spec.ts<br/>Password reset flows"]
+EDS["dashboard.spec.ts<br/>Dashboard functionality"]
+EOPS["ops.spec.ts<br/>Back office operations"]
 EH["helpers.ts<br/>Database helpers"]
 end
 subgraph "Libraries Under Test"
@@ -72,6 +81,10 @@ VT --> TN
 PW --> EA
 PW --> ES
 PW --> ET
+PW --> ECRUD
+PW --> EPW
+PW --> EDS
+PW --> EOPS
 TP --> LP
 TS --> LS
 TN --> LN
@@ -85,9 +98,13 @@ ET --> EH
 - [shipment-status.test.ts:1-40](file://tests/shipment-status.test.ts#L1-L40)
 - [tracking-number.test.ts:1-29](file://tests/tracking-number.test.ts#L1-L29)
 - [auth.spec.ts:1-37](file://tests/e2e/auth.spec.ts#L1-L37)
-- [shipping.spec.ts:1-55](file://tests/e2e/shipping.spec.ts#L1-L55)
+- [shipping.spec.ts:1-73](file://tests/e2e/shipping.spec.ts#L1-L73)
 - [tracking.spec.ts:1-42](file://tests/e2e/tracking.spec.ts#L1-L42)
-- [helpers.ts:1-49](file://tests/e2e/helpers.ts#L1-L49)
+- [address-crud.spec.ts:1-108](file://tests/e2e/address-crud.spec.ts#L1-L108)
+- [password-reset.spec.ts:1-74](file://tests/e2e/password-reset.spec.ts#L1-L74)
+- [dashboard.spec.ts:1-44](file://tests/e2e/dashboard.spec.ts#L1-L44)
+- [ops.spec.ts:1-118](file://tests/e2e/ops.spec.ts#L1-L118)
+- [helpers.ts:1-56](file://tests/e2e/helpers.ts#L1-L56)
 
 **Section sources**
 - [vitest.config.ts:1-15](file://vitest.config.ts#L1-L15)
@@ -297,6 +314,10 @@ VerifyCheck --> |Yes| True["Return true"]
 - User flow coverage
   - Authentication: login success/failure, route guards, logout functionality
   - Shipment creation: authenticated flow, redirect handling, dashboard listing, guest visibility constraints
+  - Address management: full CRUD operations with validation and error handling
+  - Password reset: secure token flow with single-use validation and account enumeration protection
+  - Dashboard operations: status filtering, search functionality, and list management
+  - Back office: role-based access control, shipment status updates, and internal notes
   - Tracking: public status/timeline display, PII masking, not-found handling, home bar navigation
 
 ```mermaid
@@ -313,7 +334,13 @@ App-->>Browser : Redirect to /account
 Browser->>App : Create new shipment
 App->>DB : Persist shipment + tracking number
 DB-->>App : Confirmation
-Browser->>App : Visit /track/{code}
+Browser->>App : Manage addresses (CRUD)
+App->>DB : Save/update/delete addresses
+DB-->>App : Address operations confirmed
+Browser->>App : Reset password flow
+App->>DB : Generate single-use token
+DB-->>App : Token created
+Browser->>App : Track package
 App->>DB : Fetch public info
 DB-->>App : Public data only
 App-->>Browser : Render masked view
@@ -321,16 +348,24 @@ App-->>Browser : Render masked view
 
 **Diagram sources**
 - [auth.spec.ts:1-37](file://tests/e2e/auth.spec.ts#L1-L37)
-- [shipping.spec.ts:1-55](file://tests/e2e/shipping.spec.ts#L1-L55)
+- [shipping.spec.ts:1-73](file://tests/e2e/shipping.spec.ts#L1-L73)
 - [tracking.spec.ts:1-42](file://tests/e2e/tracking.spec.ts#L1-L42)
-- [helpers.ts:1-49](file://tests/e2e/helpers.ts#L1-L49)
+- [address-crud.spec.ts:1-108](file://tests/e2e/address-crud.spec.ts#L1-L108)
+- [password-reset.spec.ts:1-74](file://tests/e2e/password-reset.spec.ts#L1-L74)
+- [dashboard.spec.ts:1-44](file://tests/e2e/dashboard.spec.ts#L1-L44)
+- [ops.spec.ts:1-118](file://tests/e2e/ops.spec.ts#L1-L118)
+- [helpers.ts:1-56](file://tests/e2e/helpers.ts#L1-L56)
 - [playwright.config.ts:1-32](file://playwright.config.ts#L1-L32)
 
 **Section sources**
 - [auth.spec.ts:1-37](file://tests/e2e/auth.spec.ts#L1-L37)
-- [shipping.spec.ts:1-55](file://tests/e2e/shipping.spec.ts#L1-L55)
+- [shipping.spec.ts:1-73](file://tests/e2e/shipping.spec.ts#L1-L73)
 - [tracking.spec.ts:1-42](file://tests/e2e/tracking.spec.ts#L1-L42)
-- [helpers.ts:1-49](file://tests/e2e/helpers.ts#L1-L49)
+- [address-crud.spec.ts:1-108](file://tests/e2e/address-crud.spec.ts#L1-L108)
+- [password-reset.spec.ts:1-74](file://tests/e2e/password-reset.spec.ts#L1-L74)
+- [dashboard.spec.ts:1-44](file://tests/e2e/dashboard.spec.ts#L1-L44)
+- [ops.spec.ts:1-118](file://tests/e2e/ops.spec.ts#L1-L118)
+- [helpers.ts:1-56](file://tests/e2e/helpers.ts#L1-L56)
 - [playwright.config.ts:1-32](file://playwright.config.ts#L1-L32)
 
 ## Dependency Analysis
@@ -344,6 +379,10 @@ VT --> TT["tracking-number.test.ts"]
 PW["playwright.config.ts"] --> EA["auth.spec.ts"]
 PW --> ES["shipping.spec.ts"]
 PW --> ET["tracking.spec.ts"]
+PW --> ECRUD["address-crud.spec.ts"]
+PW --> EPW["password-reset.spec.ts"]
+PW --> EDS["dashboard.spec.ts"]
+PW --> EOPS["ops.spec.ts"]
 PT --> LP["lib/pricing.ts"]
 ST --> LS["lib/shipment-status.ts"]
 TT --> LN["lib/tracking-number.ts"]
@@ -358,9 +397,13 @@ EH --> PRISMA["@prisma/client"]
 - [shipment-status.test.ts:1-40](file://tests/shipment-status.test.ts#L1-L40)
 - [tracking-number.test.ts:1-29](file://tests/tracking-number.test.ts#L1-L29)
 - [auth.spec.ts:1-37](file://tests/e2e/auth.spec.ts#L1-L37)
-- [shipping.spec.ts:1-55](file://tests/e2e/shipping.spec.ts#L1-L55)
+- [shipping.spec.ts:1-73](file://tests/e2e/shipping.spec.ts#L1-L73)
 - [tracking.spec.ts:1-42](file://tests/e2e/tracking.spec.ts#L1-L42)
-- [helpers.ts:1-49](file://tests/e2e/helpers.ts#L1-L49)
+- [address-crud.spec.ts:1-108](file://tests/e2e/address-crud.spec.ts#L1-L108)
+- [password-reset.spec.ts:1-74](file://tests/e2e/password-reset.spec.ts#L1-L74)
+- [dashboard.spec.ts:1-44](file://tests/e2e/dashboard.spec.ts#L1-L44)
+- [ops.spec.ts:1-118](file://tests/e2e/ops.spec.ts#L1-L118)
+- [helpers.ts:1-56](file://tests/e2e/helpers.ts#L1-L56)
 
 **Section sources**
 - [vitest.config.ts:1-15](file://vitest.config.ts#L1-L15)
@@ -377,6 +420,8 @@ EH --> PRISMA["@prisma/client"]
   - Use seeded data to minimize setup time and stabilize outcomes
   - Limit screenshots and traces to failures or retries to keep reports manageable
   - Cache database connections through PrismaClient singleton pattern
+  - Implement retry mechanisms for hydration-related issues in server actions
+  - Use efficient selectors and avoid unnecessary DOM queries
 
 [No sources needed since this section provides general guidance]
 
@@ -403,11 +448,17 @@ EH --> PRISMA["@prisma/client"]
   - Install Playwright browsers with system dependencies before running E2E tests: `npx playwright install --with-deps chromium`
 - Port conflicts
   - Ensure port 3000 is available or configure alternative port in environment variables
+- Hydration timing issues
+  - Server action clicks may fail if they occur before the component hydrates. Use the provided `submitUntil` helper which includes retry logic
+- Role-based access failures
+  - Ensure proper test users exist in the database (demo user for customers, ops user for back office operations)
 
 **Section sources**
 - [ci.yml:28-30](file://.github/workflows/ci.yml#L28-L30)
 - [ci.yml:75-82](file://.github/workflows/ci.yml#L75-L82)
 - [helpers.ts:23-41](file://tests/e2e/helpers.ts#L23-L41)
+- [address-crud.spec.ts:21-33](file://tests/e2e/address-crud.spec.ts#L21-L33)
+- [ops.spec.ts:26-46](file://tests/e2e/ops.spec.ts#L26-L46)
 
 ### Debugging Failing Tests
 - Unit tests
@@ -419,6 +470,8 @@ EH --> PRISMA["@prisma/client"]
   - Use HTML report to inspect steps and network activity: `npx playwright show-report`
   - Run tests in UI mode to interactively debug selectors and flows: `npm run test:e2e:ui`
   - Add strategic pauses with `await page.pause()` for manual inspection
+  - For hydration issues, add delays or use retry patterns similar to the `submitUntil` helper
+  - Check database state using Prisma Studio: `npm run db:studio`
 
 **Section sources**
 - [playwright.config.ts:17-23](file://playwright.config.ts#L17-L23)
@@ -457,4 +510,4 @@ RunE2E --> Report["Upload HTML Report on Failure"]
 - [ci.yml:40-94](file://.github/workflows/ci.yml#L40-L94)
 
 ## Conclusion
-Timberland's comprehensive testing strategy combines fast, isolated unit tests with robust E2E scenarios to ensure application reliability. Unit tests focus on pure business logic—pricing calculations, state transitions, and utility functions—while E2E tests validate critical user journeys across authentication, shipment creation, and tracking. The testing architecture leverages Vitest for rapid feedback on core algorithms and Playwright for realistic user interaction testing against a real database and application stack. The configuration and CI pipeline ensure consistent execution, meaningful reporting, and stable outcomes across development and production environments. By following the patterns and guidelines outlined here, contributors can extend coverage confidently and maintain high reliability across all application features.
+Timberland's comprehensive testing strategy combines fast, isolated unit tests with robust E2E scenarios to ensure application reliability. Unit tests focus on pure business logic—pricing calculations, state transitions, and utility functions—while E2E tests validate critical user journeys across authentication, shipment creation, address management, password reset, dashboard operations, back office functionality, and tracking. The testing architecture leverages Vitest for rapid feedback on core algorithms and Playwright for realistic user interaction testing against a real database and application stack. The expanded test coverage now includes comprehensive address CRUD operations, secure password reset flows, enhanced dashboard functionality, and back office operations with proper role-based access control. The configuration and CI pipeline ensure consistent execution, meaningful reporting, and stable outcomes across development and production environments. By following the patterns and guidelines outlined here, contributors can extend coverage confidently and maintain high reliability across all application features.
