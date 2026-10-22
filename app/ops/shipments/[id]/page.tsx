@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { prisma } from "@/lib/db";
 import { getShipmentForOps } from "@/server/ops.service";
+import { getAdminSession } from "@/server/admin.service";
 import { STATUS_META, nextStatuses, type ShipmentStatus } from "@/lib/shipment-status";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AdvanceStatusForm } from "@/components/ops/advance-status-form";
 import { InternalNoteForm } from "@/components/ops/internal-note-form";
+import { ForceStatusForm } from "@/components/ops/admin/force-status-form";
+import { EditShipmentForm } from "@/components/ops/admin/edit-shipment-form";
+import { DeleteShipmentButton } from "@/components/ops/admin/delete-shipment-button";
 
 export const metadata = { title: "Shipment — Operations" };
 
@@ -17,6 +22,11 @@ export default async function OpsShipmentPage({ params }: { params: Promise<{ id
   const { id } = await params;
   const shipment = await getShipmentForOps(id);
   if (!shipment) notFound();
+
+  const admin = await getAdminSession();
+  const serviceLevels = admin
+    ? await prisma.serviceLevel.findMany({ where: { active: true }, select: { id: true, name: true }, orderBy: { slaDays: "desc" } })
+    : [];
 
   const status = shipment.status as ShipmentStatus;
   const allowed = nextStatuses(status);
@@ -90,6 +100,43 @@ export default async function OpsShipmentPage({ params }: { params: Promise<{ id
               <InternalNoteForm shipmentId={shipment.id} currentStatus={status} />
             </CardContent>
           </Card>
+
+          {admin && (
+            <>
+              <Card className="border-warning/60">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-warning">Admin: force status</CardTitle>
+                  <CardDescription>Jump to any status, bypassing the state machine.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ForceStatusForm shipmentId={shipment.id} currentStatus={status} />
+                </CardContent>
+              </Card>
+
+              <Card className="border-warning/60">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-warning">Admin: edit shipment</CardTitle>
+                  <CardDescription>Overwrite price, payment, service, and notes.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <EditShipmentForm
+                    shipmentId={shipment.id}
+                    current={{
+                      price: Number(shipment.price),
+                      currency: shipment.currency,
+                      paymentMethod: shipment.paymentMethod,
+                      notes: shipment.notes,
+                      serviceLevelId: shipment.serviceLevelId,
+                    }}
+                    serviceLevels={serviceLevels}
+                  />
+                  <div className="border-t border-border pt-4">
+                    <DeleteShipmentButton shipmentId={shipment.id} trackingNumber={shipment.trackingNumber} />
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
 
           <Card>
             <CardHeader>

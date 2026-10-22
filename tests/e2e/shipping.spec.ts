@@ -69,4 +69,32 @@ test.describe("registered customer shipment flow", () => {
     await expect(page.locator("#recipient-contactName")).not.toHaveValue("");
     await expect(page.locator("#recipient-postalCode")).not.toHaveValue("");
   });
+
+  test("saving a recipient as an address persists it to the address book", async ({ page }) => {
+    await login(page);
+    await page.goto("/account/new-shipment");
+
+    const LABEL = "E2e Doorstep";
+    await page.locator("#recipient-contactName").fill("Newton Persist");
+    await page.locator("#recipient-phone").fill("+1 555 0999");
+    await page.locator("#recipient-line1").fill("9 E2e Road");
+    await page.locator("#recipient-city").fill("Bend");
+    await page.locator("#recipient-postalCode").fill("22301");
+    await page.locator("#p-0-desc").fill("E2e persist package");
+
+    // Opt in to keeping the recipient; the label field then appears.
+    await page.locator("#saveRecipient").check();
+    await page.locator("#recipientLabel").fill(LABEL);
+
+    await page.getByRole("button", { name: /create shipment/i }).click();
+    await expect(page).toHaveURL(/\/account\/shipments\/.+/, { timeout: 15000 });
+
+    // The address is now in the saved-address book. Scope to the unique labeled
+    // card (booking a shipment also stores an unlabeled recipient snapshot).
+    await page.goto("/account/addresses");
+    const saved = page.getByTestId("address-card").filter({ hasText: LABEL });
+    await expect(saved).toHaveCount(1);
+    await expect(saved).toContainText("Newton Persist");
+    await expect(saved).toContainText("9 E2e Road");
+  });
 });

@@ -30,7 +30,8 @@ test.describe("authentication", () => {
   test("signed-in user can log out", async ({ page }) => {
     await loginAs(page, DEMO_EMAIL, DEMO_PASSWORD);
     await expect(page.getByRole("heading", { name: /your shipments/i })).toBeVisible();
-    await page.getByRole("button", { name: /sign out/i }).click();
+    await page.getByRole("button", { name: "Account menu" }).click();
+    await page.getByRole("menuitem", { name: /sign out/i }).click();
     await expect(page).toHaveURL(/\/(login|$)/);
   });
 });

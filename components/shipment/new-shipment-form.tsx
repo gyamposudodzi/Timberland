@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2 } from "lucide-react";
 import { createShipmentAction } from "@/server/shipment.actions";
 import { estimateQuoteAction } from "@/server/quote.actions";
+import { saveAddressAction } from "@/server/account.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -145,6 +146,8 @@ export function NewShipmentForm({
   const [notes, setNotes] = useState("");
   const [sender, setSender] = useState<AddressValue>(defaultSender ?? EMPTY_ADDRESS);
   const [recipient, setRecipient] = useState<AddressValue>(EMPTY_ADDRESS);
+  const [saveRecipient, setSaveRecipient] = useState(false);
+  const [recipientLabel, setRecipientLabel] = useState("");
   const [parcels, setParcels] = useState<ParcelValue[]>([{ ...EMPTY_PARCEL }]);
 
   const totals = useMemo(() => {
@@ -199,8 +202,25 @@ export function NewShipmentForm({
 
     startTransition(async () => {
       const res = await createShipmentAction(null, formData);
-      if (res.ok && res.shipmentId) router.push(`/account/shipments/${res.shipmentId}`);
-      else setError(res.error ?? "Could not create the shipment.");
+      if (!res.ok || !res.shipmentId) {
+        setError(res.error ?? "Could not create the shipment.");
+        return;
+      }
+      // Best-effort: keep the recipient for next time without blocking the receipt view.
+      if (saveRecipient) {
+        const fd = new FormData();
+        fd.set("label", recipientLabel);
+        fd.set("contactName", recipient.contactName);
+        fd.set("phone", recipient.phone);
+        fd.set("line1", recipient.line1);
+        fd.set("line2", recipient.line2);
+        fd.set("city", recipient.city);
+        fd.set("region", recipient.region);
+        fd.set("postalCode", recipient.postalCode);
+        fd.set("country", recipient.country);
+        await saveAddressAction(null, fd).catch(() => undefined);
+      }
+      router.push(`/account/shipments/${res.shipmentId}`);
     });
   }
 
@@ -236,6 +256,29 @@ export function NewShipmentForm({
       <section className="rounded-lg border border-border p-5">
         <h2 className="mb-4 text-lg font-semibold">To (recipient)</h2>
         <AddressFields idPrefix="recipient" value={recipient} onChange={setRecipient} addresses={savedAddresses} />
+        <div className="mt-4 space-y-3 rounded-md bg-muted/40 p-4">
+          <label htmlFor="saveRecipient" className="flex items-center gap-2 text-sm">
+            <input
+              id="saveRecipient"
+              type="checkbox"
+              className="h-4 w-4 accent-primary"
+              checked={saveRecipient}
+              onChange={(e) => setSaveRecipient(e.target.checked)}
+            />
+            Save this recipient to my address book
+          </label>
+          {saveRecipient && (
+            <Field label="Label" htmlFor="recipientLabel" hint="e.g. Office, Mom's house" className="max-w-xs">
+              <Input
+                id="recipientLabel"
+                value={recipientLabel}
+                onChange={(e) => setRecipientLabel(e.target.value)}
+                placeholder="Optional"
+                maxLength={60}
+              />
+            </Field>
+          )}
+        </div>
       </section>
 
       <section className="rounded-lg border border-border p-5">

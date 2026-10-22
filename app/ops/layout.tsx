@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ClipboardList, LogIn } from "lucide-react";
+import { ClipboardList, LogIn, ShieldCheck } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { getOpsSession } from "@/server/ops.service";
 
 const LINKS = [{ href: "/ops", label: "Shipment queue", icon: ClipboardList }];
+const ADMIN_LINK = { href: "/ops/admin", label: "Admin console", icon: ShieldCheck };
 
 export default async function OpsLayout({ children }: { children: React.ReactNode }) {
   // Role gate: signed-in customers are sent back to their dashboard; signed-out
@@ -12,6 +13,8 @@ export default async function OpsLayout({ children }: { children: React.ReactNod
   const session = await auth();
   if (!session?.user) redirect("/login");
   if (!(await getOpsSession())) redirect("/account");
+  const isAdmin = session.user.role === "ADMIN";
+  const links = isAdmin ? [...LINKS, ADMIN_LINK] : LINKS;
 
   return (
     <div className="container-page py-10">
@@ -28,7 +31,7 @@ export default async function OpsLayout({ children }: { children: React.ReactNod
       <div className="grid gap-8 md:grid-cols-[220px_1fr]">
         <aside>
           <nav className="flex flex-col gap-1">
-            {LINKS.map((l) => (
+            {links.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}

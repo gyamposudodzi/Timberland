@@ -53,3 +53,55 @@ export async function closePrisma(): Promise<void> {
     cached = null;
   }
 }
+
+function scratchTn(): string {
+  const base = (Date.now().toString(36) + Math.random().toString(36)).toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return "TB" + base.slice(0, 12);
+}
+
+/**
+ * Creates an isolated scratch shipment (unowned, standalone addresses) so admin
+ * write/delete tests never mutate the seed rows the other specs assert against.
+ */
+export async function createScratchShipment(): Promise<{ id: string; trackingNumber: string }> {
+  const level = await prisma().serviceLevel.findFirst({ orderBy: { createdAt: "asc" } });
+  if (!level) throw new Error("No service level seeded — run `npm run db:seed`.");
+  const sender = await prisma().address.create({
+    data: { contactName: "Scratch Sender", phone: "+1 555 0000", line1: "1 Scratch Rd", city: "Salem", postalCode: "15001", country: "US" },
+  });
+  const recipient = await prisma().address.create({
+    data: { contactName: "Scratch Recipient", phone: "+1 555 0000", line1: "2 Scratch Rd", city: "Eugene", postalCode: "24001", country: "US" },
+  });
+  const tn = scratchTn();
+  const shipment = await prisma().shipment.create({
+    data: {
+      trackingNumber: tn,
+      status: "CREATED",
+      serviceLevelId: level.id,
+      senderAddressId: sender.id,
+      recipientAddressId: recipient.id,
+      price: 10,
+      currency: "USD",
+      parcels: { create: [{ description: "Scratch parcel", weightKg: 1, pieces: 1 }] },
+      trackingEvents: { create: [{ statusCode: "CREATED", location: "Salem, US", isPublic: true, source: "SYSTEM" }] },
+    },
+    select: { id: true, trackingNumber: true },
+  });
+  return shipment;
+}
+
+/** Creates a throwaway CUSTOMER for role-management tests. */
+export async function createScratchUser(email: string): Promise<{ id: string }> {
+  const u = await prisma().user.create({ data: { email, name: "Scratch User", role: "CUSTOMER" }, select: { id: true } });
+  return u;
+}
+
+export async function getUserRole(email: string): Promise<string | null> {
+  const u = await prisma().user.findUnique({ where: { email }, select: { role: true } });
+  return u?.role ?? null;
+}
+
+export async function shipmentExists(id: string): Promise<boolean> {
+  const s = await prisma().shipment.findUnique({ where: { id }, select: { id: true } });
+  return !!s;
+}

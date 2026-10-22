@@ -73,6 +73,19 @@ async function main() {
     },
   });
 
+  // Administrator — full control (status override, edit/delete any shipment, manage roles).
+  const adminHash = await bcrypt.hash("admin1234", 12);
+  await prisma.user.create({
+    data: {
+      email: "admin@timberland.example",
+      name: "Ada Admin",
+      phone: "+1 555 0000",
+      passwordHash: adminHash,
+      role: "ADMIN",
+      emailVerified: true,
+    },
+  });
+
   // Dedicated account for the password-reset e2e (no other test logs in here).
   const resetHash = await bcrypt.hash("reset1234", 12);
   await prisma.user.create({
@@ -174,6 +187,7 @@ async function main() {
   console.log("Seeded Timberland demo data.");
   console.log("  Login:    demo@timberland.example  /  demo1234");
   console.log("  Ops:      ops@timberland.example   /  ops1234");
+  console.log("  Admin:    admin@timberland.example /  admin1234");
   console.log(`  Track A (delivered):        ${tnA}`);
   console.log(`  Track B (out for delivery): ${tnB}`);
   console.log(`  Track C (created):          ${tnC}`);

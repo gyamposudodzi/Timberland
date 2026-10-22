@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Package } from "lucide-react";
+import { Bell, Package } from "lucide-react";
 import { auth, signOut } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { UserMenu } from "@/components/layout/user-menu";
 
 const NAV = [
   { href: "/track", label: "Track" },
@@ -38,24 +39,23 @@ export async function SiteHeader() {
         <div className="flex items-center gap-2">
           {user ? (
             <>
-              {user.role === "STAFF" || user.role === "ADMIN" ? (
-                <Link href="/ops" className="hidden text-sm text-muted-foreground hover:text-foreground sm:inline">
-                  Ops
-                </Link>
-              ) : null}
-              <Link href="/account" className="hidden text-sm text-muted-foreground hover:text-foreground sm:inline">
-                {user.name ?? "Account"}
+              <Link
+                href="/account/notifications"
+                aria-label="Notifications"
+                className="grid h-9 w-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <Bell className="h-5 w-5" />
               </Link>
-              <form
-                action={async () => {
+              <UserMenu
+                name={user.name ?? ""}
+                email={user.email ?? null}
+                role={user.role ?? null}
+                userId={user.id ?? ""}
+                signOutAction={async () => {
                   "use server";
                   await signOut({ redirectTo: "/" });
                 }}
-              >
-                <Button variant="outline" size="sm" type="submit">
-                  Sign out
-                </Button>
-              </form>
+              />
             </>
           ) : (
             <>

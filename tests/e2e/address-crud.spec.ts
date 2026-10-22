@@ -5,9 +5,19 @@ const DEMO_PASSWORD = "demo1234";
 
 async function login(page: Page) {
   await page.goto("/login");
+  const submit = page.getByRole("main").getByRole("button", { name: /sign in/i });
   await page.getByLabel(/email/i).fill(DEMO_EMAIL);
   await page.getByLabel(/password/i).fill(DEMO_PASSWORD);
-  await page.getByRole("main").getByRole("button", { name: /sign in/i }).click();
+  await submit.click();
+  try {
+    await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 8000 });
+  } catch {
+    // First click may land before hydration (no-op); refill and retry once.
+    await page.getByLabel(/email/i).fill(DEMO_EMAIL);
+    await page.getByLabel(/password/i).fill(DEMO_PASSWORD);
+    await submit.click();
+    await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 10000 });
+  }
   await expect(page.getByRole("heading", { name: /your shipments/i })).toBeVisible();
 }
 

@@ -6,76 +6,62 @@ scope:
     - '**'
 source_files:
     - app/globals.css
-    - app/layout.tsx
     - components/ui/button.tsx
     - components/ui/card.tsx
+    - components/ui/field.tsx
+    - components/ui/input.tsx
     - components/ui/alert.tsx
     - components/ui/badge.tsx
-    - components/ui/input.tsx
-    - components/ui/select.tsx
-    - components/ui/textarea.tsx
-    - components/ui/field.tsx
-    - components/ui/label.tsx
     - components/ui/spinner.tsx
+    - package.json
 ---
 
 ## Approach
 
-The Timberland Courier Delivery Platform uses **Tailwind CSS v4** (with `@tailwindcss/turbopack`) as its styling engine, combined with a **CSS custom properties design-token system** and a small internal component library built on **Class Variance Authority (CVA)** and `clsx`/`tailwind-merge`. There is no separate Tailwind config file — configuration lives in the single `app/globals.css` via the Tailwind v4 `@theme inline` directive.
+The app uses **Tailwind CSS v4** (via `@tailwindcss/turbopack`) as the styling engine, with a **light-first CSS custom properties palette** declared in `app/globals.css` and exposed to Tailwind through the `@theme inline` block. Components are built from small primitives under `components/ui/`, composed with utility classes rather than bespoke component styles.
+
+Key packages:
+- `tailwindcss` ^4, `@tailwindcss/turbopack` ^4 — Tailwind v4 pipeline
+- `class-variance-authority` (`cva`) — variant-driven style composition on primitive components
+- `clsx` + `tailwind-merge` — className merging via a shared `cn` helper in `lib/utils.ts`
+- `lucide-react` — icon library used throughout the UI
+
+No SCSS/Sass, no CSS-in-JS runtime, no external component library (e.g. shadcn/ui) is vendored — the `components/ui/*` files are hand-written primitives modeled after that pattern.
 
 ## Key Files
 
-- `app/globals.css` — only stylesheet; declares all design tokens, theme mapping, base styles, and one utility layer.
-- `app/layout.tsx` — root layout that injects Geist Sans/Mono fonts as CSS variables (`--font-geist-sans`, `--font-geist-mono`) consumed by the theme.
-- `components/ui/*` — shared primitive components (`button.tsx`, `card.tsx`, `alert.tsx`, `badge.tsx`, `field.tsx`, `input.tsx`, `label.tsx`, `select.tsx`, `spinner.tsx`, `textarea.tsx`).
-- `package.json` — dependencies: `tailwindcss ^4`, `@tailwindcss/turbopack ^4`, `class-variance-authority ^0.7.1`, `clsx ^2.1.1`, `tailwind-merge ^3.7.0`, `lucide-react ^1.59.0`.
+- `app/globals.css` — single source of design tokens: CSS variables for light/dark palettes, font names, border radii, plus a `container-page` utility class.
+- `components/ui/button.tsx` — canonical example of a CVA-based primitive exposing `variant` (`primary|secondary|outline|ghost|destructive|accent`) and `size` (`sm|md|lg|icon`).
+- `components/ui/card.tsx` — compound component (`Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardFooter`) using semantic color tokens (`bg-card`, `text-card-foreground`, `border-border`).
+- `components/ui/field.tsx`, `input.tsx`, `label.tsx`, `select.tsx`, `textarea.tsx`, `alert.tsx`, `badge.tsx`, `spinner.tsx` — other primitives following the same token-driven pattern.
+- `package.json` — declares the Tailwind v4 dependency stack and the `cn`-related utilities.
 
 ## Architecture & Conventions
 
-### Design Tokens (CSS Custom Properties)
+1. **Design tokens live in CSS variables.** `globals.css` defines a `:root` light palette (forest-green primary `#1f6f4a`, amber accent `#c88a2e`, neutral backgrounds `#f7f8f6`) and a `.dark` override. These variables are re-exported into Tailwind's theme namespace via `@theme inline { --color-* }`, so components reference semantic names like `bg-primary`, `text-muted-foreground`, `border-border` instead of raw hex values.
 
-All colors, radii, and font families are defined as CSS variables under `:root` (light mode) and `.dark` (dark mode), covering:
+2. **Dark mode is class-based.** The `.dark` selector toggles the entire palette; there is no JS toggle logic visible in the styled files — consumers add the `dark` class to an ancestor element.
 
-- Semantic roles: `background`, `foreground`, `card`, `primary`, `secondary`, `muted`, `accent`, `destructive`, `success`, `warning`, `border`, `input`, `ring`.
-- Each semantic color has an associated `-foreground` variant for text-on-color usage.
-- Radii are exposed as `--radius-lg` (0.75rem), `--radius-md` (0.5rem), `--radius-sm` (0.375rem).
-- Fonts are exposed as `--font-sans` and `--font-mono`, sourced from the Geist variable fonts loaded in `app/layout.tsx`.
+3. **Primitive components use CVA variants.** `button.tsx` demonstrates the pattern: a `cva()` call defines base styles plus `variant` and `size` maps, with `defaultVariants`. Other primitives follow suit, keeping visual decisions declarative and centralized.
 
-These variables are mapped into Tailwind's theme namespace via `@theme inline` using the `--color-*` convention (e.g. `--color-primary: var(--primary)`), so they can be used directly as Tailwind utilities like `bg-primary`, `text-muted-foreground`, `rounded-lg`, etc.
+4. **className composition via `cn`.** Every primitive spreads a user-supplied `className` through `cn(...)` from `@/lib/utils`, which merges with `clsx` and `tailwind-merge` — allowing callers to override or extend default styles safely.
 
-### Dark Mode
+5. **Semantic color tokens over named colors.** Components never hardcode brand colors; they consume `--color-primary`, `--color-accent`, `--color-destructive`, etc., making them automatically theme-aware.
 
-Dark mode is implemented through the `.dark` class selector on the document root. Components toggle it by adding/removing the `dark` class on `<html>` or `<body>`. The token pairs in `:root` vs `.dark` provide a light-first palette with forest-green primary (`#1f6f4a`) and amber accent (`#c88a2e`).
+6. **Typography and spacing are Tailwind utilities.** Fonts are set via `--font-sans: var(--font-geist-sans)` and `--font-mono: var(--font-geist-mono)` in the `@theme` block; radius tokens (`--radius-lg/md/sm`) are also exposed. Spacing, sizing, and layout are expressed with Tailwind utility classes directly in JSX.
 
-### Component Library Pattern
+7. **Global reset conventions.** A universal `* { border-color: var(--border); }` rule applies the tokenized border color everywhere, and `body` sets background/foreground/font-family from tokens.
 
-Shared UI primitives live under `components/ui/` and follow a consistent pattern:
+8. **Page-level container utility.** A single `.container-page` utility in `@layer utilities` constrains page content to `max-width: 80rem` with centered margins and horizontal padding — reused across pages rather than repeated inline.
 
-1. **Primitive components** use Tailwind utility classes directly (e.g. `Card` composes `rounded-lg border border-border bg-card text-card-foreground shadow-sm`).
-2. **Variants are declared with CVA** (`class-variance-authority`) — see `button.tsx` which defines `variant` (`primary`, `secondary`, `outline`, `ghost`, `destructive`, `accent`) and `size` (`sm`, `md`, `lg`, `icon`) variants, with defaults `variant="primary"` and `size="md"`.
-3. **Class merging**: every component accepts a `className` prop and merges it via `cn(...)` (from `@/lib/utils`, which re-exports `clsx` + `tailwind-merge`) so callers can override or extend styles safely.
-4. **Accessibility hooks**: buttons include `focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1`, disabled states use `disabled:pointer-events-none disabled:opacity-50`, and components expose proper React ref forwarding where applicable.
-
-### Typography & Base Styles
-
-- Font loading uses Next.js `next/font/google` to load `Geist` and `Geist_Mono` as CSS variables, then referenced via `--font-sans` / `--font-mono` in the Tailwind theme.
-- Global base styles set `body` background/foreground from tokens, apply `antialiased`, and use a flex column layout.
-- A global `* { border-color: var(--border); }` rule applies the border token universally.
-- One custom utility class `.container-page` is defined in `@layer utilities` providing a centered page container (`max-width: 80rem`, `padding-inline: 1rem`).
-
-### Iconography
-
-Icons come from `lucide-react`; there is no custom icon component layer — icons are imported and rendered inline within components.
-
-### Responsive Strategy
-
-Responsive behavior is expressed entirely through Tailwind's responsive prefixes (e.g. `sm:`, `md:`, `lg:`) applied directly in component className strings. No media-query-based CSS exists outside of the token/theme declarations.
+9. **Component organization by feature area.** Under `components/`, directories mirror route groups (`account/`, `auth/`, `layout/`, `ops/`, `quote/`, `shipment/`, `tracking/`), while cross-cutting primitives live in `components/ui/`.
 
 ## Conventions & Constraints
 
-- **Single source of truth for colors/radii/fonts**: new visual tokens must be added as CSS custom properties in `:root` and `.dark` in `app/globals.css`, then mapped through `@theme inline` — not as ad-hoc hex values scattered across components.
-- **Component classes go through `cn()`**: every component that accepts a `className` prop merges it via `cn()` rather than string concatenation, ensuring deterministic Tailwind class resolution.
-- **Variant-driven styling**: multi-state UI elements (buttons, badges, alerts) declare their variants with CVA rather than conditional className branches inside JSX.
-- **Semantic color tokens over literal colors**: components reference tokens like `bg-primary`, `text-muted-foreground`, `border-border` instead of hard-coded hex values, enabling dark-mode swaps and brand consistency.
-- **Light-first palette**: the default `:root` defines the light theme; `.dark` overrides are additive. New tokens should therefore define both light and dark values.
-- **No Tailwind config file**: all Tailwind configuration is done inline via `@theme` in `globals.css` (Tailwind v4 style). Adding a `tailwind.config.*` file would break this convention.
+- **Use semantic Tailwind color tokens** (`bg-primary`, `text-muted-foreground`, `border-border`, `bg-card`, etc.) defined in `globals.css`; do not introduce new ad-hoc hex colors in component JSX.
+- **Build new interactive primitives with `cva`** (as in `button.tsx`) when a component has multiple visual variants or sizes; keep variant/sizing maps exhaustive and typed via `VariantProps<typeof ...>`.
+- **Merge user classNames through `cn`** from `@/lib/utils` on every exported primitive so callers can override defaults without breaking internal structure.
+- **Dark-mode support is opt-in via the `.dark` class** on an ancestor; any new token added to `:root` should also be mirrored in the `.dark` block to maintain the light-first palette.
+- **Fonts and radii go through the `@theme inline` block** in `globals.css` so they propagate as Tailwind design tokens (`--font-sans`, `--radius-*`), rather than being referenced as raw CSS variables in components.
+- **Global resets belong in `globals.css`**, not per-component styles — the universal `border-color` and `body` rules illustrate this boundary.
+- **Page containers use the `.container-page` utility** from `@layer utilities` rather than repeating max-width/margin patterns inline.

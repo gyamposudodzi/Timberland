@@ -15,7 +15,19 @@
 - [db.ts](file://lib/db.ts)
 - [notifications.ts](file://lib/notifications.ts)
 - [middleware.ts](file://middleware.ts)
+- [account.actions.ts](file://server/account.actions.ts)
+- [account.service.ts](file://server/account.service.ts)
+- [address-book.tsx](file://components/account/address-book.tsx)
+- [address-form.tsx](file://components/account/address-form.tsx)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Enhanced address picker component with saved address selection functionality
+- Added server-side service integration for saved address management
+- Integrated saved address functionality into shipment creation workflow
+- Updated address management with complete CRUD operations
+- Improved user experience with address copying and saving capabilities
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -36,28 +48,33 @@ This document explains the end-to-end shipment creation workflow in Timberland, 
 - Service level selection and quote calculation integration
 - Authentication requirements, zone resolution, and tracking number generation
 - Transaction flow and notification behavior
+- **Enhanced saved address functionality integration**
 
 The goal is to make the process understandable for both technical and non-technical readers while providing precise references to the source code.
 
 ## Project Structure
 Shipment creation spans several layers:
-- UI layer: Next.js page and client-side form
-- Server actions: Form submission handler and quote estimation
+- UI layer: Next.js page and client-side form with enhanced address picker
+- Server actions: Form submission handler, quote estimation, and address management
 - Pricing engine: Zone resolution, service level lookup, and quote computation
 - Data layer: Prisma models and database transactions
 - Identity and security: Authentication middleware and session checks
 - Notifications: Post-creation status update notifications
+- **Address management: Complete CRUD operations for saved addresses**
 
 ```mermaid
 graph TB
 UI["New Shipment Page<br/>and Client Form"] --> SA["createShipmentAction"]
 UI --> QA["estimateQuoteAction"]
+UI --> AM["Address Management"]
 SA --> PR["Pricing Engine (estimateQuote)"]
 SA --> DB["Prisma Database"]
 SA --> TN["Tracking Number Generator"]
 SA --> ZN["Zone Resolver"]
 SA --> NT["Notification Dispatcher"]
 QA --> PR
+AM --> AS["getSavedAddresses"]
+AS --> DB
 PR --> DB
 SA --> DB
 ```
@@ -67,6 +84,7 @@ SA --> DB
 - [new-shipment-form.tsx:89-163](file://components/shipment/new-shipment-form.tsx#L89-L163)
 - [shipment.actions.ts:45-145](file://server/shipment.actions.ts#L45-L145)
 - [quote.actions.ts:27-64](file://server/quote.actions.ts#L27-L64)
+- [account.service.ts:114-121](file://server/account.service.ts#L114-L121)
 - [rating.ts:19-60](file://lib/rating.ts#L19-L60)
 - [zones.ts:29-34](file://lib/zones.ts#L29-L34)
 - [tracking-number.ts:36-41](file://lib/tracking-number.ts#L36-L41)
@@ -77,6 +95,7 @@ SA --> DB
 - [new-shipment-form.tsx:89-163](file://components/shipment/new-shipment-form.tsx#L89-L163)
 - [shipment.actions.ts:45-145](file://server/shipment.actions.ts#L45-L145)
 - [quote.actions.ts:27-64](file://server/quote.actions.ts#L27-L64)
+- [account.service.ts:114-121](file://server/account.service.ts#L114-L121)
 - [rating.ts:19-60](file://lib/rating.ts#L19-L60)
 - [zones.ts:29-34](file://lib/zones.ts#L29-L34)
 - [tracking-number.ts:36-41](file://lib/tracking-number.ts#L36-L41)
@@ -89,12 +108,14 @@ SA --> DB
 - Zone resolver: Maps postal codes to service zone codes for rate rule lookup.
 - Tracking number generator: Produces random, check-digit validated public tracking numbers.
 - Notification dispatcher: Sends email updates after successful shipment creation.
+- **Address management system: Complete CRUD operations for saved addresses with zone resolution**
 
 Key responsibilities:
 - Input normalization and validation
 - Service level existence verification
 - Quote calculation with multi-parcel support
 - Address creation with optional fields and zone assignment
+- **Saved address management with label support and zone resolution**
 - Unique tracking number allocation with retry logic
 - Initial tracking event insertion
 - Asynchronous notification dispatch
@@ -107,18 +128,25 @@ Key responsibilities:
 - [zones.ts:29-34](file://lib/zones.ts#L29-L34)
 - [tracking-number.ts:36-41](file://lib/tracking-number.ts#L36-L41)
 - [notifications.ts:49-108](file://lib/notifications.ts#L49-L108)
+- [account.actions.ts:29-86](file://server/account.actions.ts#L29-L86)
+- [account.service.ts:114-121](file://server/account.service.ts#L114-L121)
 
 ## Architecture Overview
-The shipment creation architecture integrates UI, server actions, pricing, database, and notifications.
+The shipment creation architecture integrates UI, server actions, pricing, database, notifications, and address management.
 
 ```mermaid
 sequenceDiagram
 participant UI as "Client Form"
+participant AM as "Address Management"
 participant SA as "createShipmentAction"
 participant PR as "estimateQuote"
 participant DB as "Prisma Database"
 participant TN as "Tracking Number Generator"
 participant NT as "Notification Dispatcher"
+UI->>AM : Load saved addresses
+AM->>DB : Query user addresses
+DB-->>AM : Return address list
+UI->>UI : Display address picker
 UI->>SA : Submit FormData (serviceLevelCode, pickupDate, notes, senderJson, recipientJson, parcelsJson)
 SA->>SA : Validate payload with shipmentSchema
 SA->>DB : Lookup serviceLevel by code
@@ -136,6 +164,7 @@ SA-->>UI : Return trackingNumber and shipmentId
 **Diagram sources**
 - [new-shipment-form.tsx:136-163](file://components/shipment/new-shipment-form.tsx#L136-L163)
 - [shipment.actions.ts:45-145](file://server/shipment.actions.ts#L45-L145)
+- [account.service.ts:114-121](file://server/account.service.ts#L114-L121)
 - [rating.ts:19-60](file://lib/rating.ts#L19-L60)
 - [tracking-number.ts:36-41](file://lib/tracking-number.ts#L36-L41)
 - [notifications.ts:49-108](file://lib/notifications.ts#L49-L108)
@@ -207,6 +236,69 @@ Notify --> Success(["Return trackingNumber and shipmentId"])
 **Section sources**
 - [shipment.actions.ts:14-145](file://server/shipment.actions.ts#L14-L145)
 
+### Enhanced Address Picker Component
+**Updated** The address picker component now includes comprehensive saved address functionality:
+
+- **Saved Address Selection**: Dropdown menu allowing users to copy from existing saved addresses
+- **Real-time Population**: Selected addresses automatically populate all form fields
+- **User Experience**: Seamless integration with existing address input fields
+- **Data Binding**: Maintains two-way binding between selected addresses and form state
+
+Implementation details:
+- Uses React state to manage selected address ID
+- Provides onChange handlers for all address fields
+- Integrates with parent component's address state management
+- Handles empty states gracefully when no saved addresses exist
+
+```mermaid
+classDiagram
+class AddressPicker {
++pick : string
++addresses : SavedAddressValue[]
++applyPick(e) : void
++onChange(v : AddressValue) : void
+}
+class SavedAddressValue {
++id : string
++label : string
++contactName : string
++phone : string
++line1 : string
++line2 : string
++city : string
++region : string
++postalCode : string
++country : string
+}
+AddressPicker --> SavedAddressValue : "uses array of"
+```
+
+**Diagram sources**
+- [new-shipment-form.tsx:54-128](file://components/shipment/new-shipment-form.tsx#L54-L128)
+
+**Section sources**
+- [new-shipment-form.tsx:54-128](file://components/shipment/new-shipment-form.tsx#L54-L128)
+
+### Server-side Address Management Service
+**New** Complete address management system with server-side service integration:
+
+- **getSavedAddresses**: Retrieves user's saved addresses with zone information
+- **saveAddressAction**: Creates or updates saved addresses with validation
+- **deleteAddressAction**: Removes saved addresses with ownership verification
+- **Zone Resolution**: Automatically resolves zone IDs from postal codes
+- **Ownership Scoping**: Ensures users can only modify their own addresses
+
+Key features:
+- Full CRUD operations for saved addresses
+- Label support for better organization (e.g., "Home", "Office")
+- Automatic zone resolution during address creation/update
+- Ownership-scoped database operations for security
+- Path revalidation for real-time UI updates
+
+**Section sources**
+- [account.service.ts:114-121](file://server/account.service.ts#L114-L121)
+- [account.actions.ts:29-86](file://server/account.actions.ts#L29-L86)
+
 ### Validation Schema
 The validation layer uses Zod to enforce constraints:
 - Address fields: required contact name, phone format, address lines, city, postal code, country defaulting to US.
@@ -270,17 +362,22 @@ Practical example:
 - [new-shipment-form.tsx:108-134](file://components/shipment/new-shipment-form.tsx#L108-L134)
 - [shipment.actions.ts:80-118](file://server/shipment.actions.ts#L80-L118)
 
-### Address Management
-- Sender and recipient addresses are created during shipment creation.
-- Optional fields line2 and region are normalized to null if empty.
-- Zone IDs are resolved from postal codes and attached to addresses.
+### Enhanced Address Management
+**Updated** Address management now includes comprehensive saved address functionality:
+
+- **Sender and Recipient Addresses**: Created during shipment creation with zone resolution
+- **Optional Fields**: line2 and region are normalized to null if empty
+- **Zone Assignment**: Zone IDs are resolved from postal codes and attached to addresses
+- **Saved Address Integration**: Users can copy from saved addresses or save recipient addresses after shipment creation
 
 Practical example:
 - Creating a shipment where the sender has no region and the recipient includes a region.
 - Both addresses are persisted with appropriate zone assignments.
+- Recipient address can be optionally saved for future use.
 
 **Section sources**
 - [shipment.actions.ts:87-97](file://server/shipment.actions.ts#L87-L97)
+- [new-shipment-form.tsx:209-222](file://components/shipment/new-shipment-form.tsx#L209-L222)
 - [schema.prisma:131-154](file://prisma/schema.prisma#L131-L154)
 
 ### Service Level Selection
@@ -348,7 +445,7 @@ Practical example:
 - Default zone is applied when postal code is empty or unmapped.
 
 Practical example:
-- A postal code starting with “0” maps to METRO; “5” maps to REMOTE.
+- A postal code starting with "0" maps to METRO; "5" maps to REMOTE.
 
 **Section sources**
 - [zones.ts:16-34](file://lib/zones.ts#L16-L34)
@@ -392,11 +489,11 @@ CommitShipment --> End(["End Transaction"])
 
 ### Practical Examples
 
-#### Example 1: Single Parcel Standard Shipment
+#### Example 1: Single Parcel Standard Shipment with Saved Address
 - Inputs:
   - Service level: STANDARD
   - Pickup date: next business day
-  - Sender: existing saved address
+  - Sender: copied from saved address
   - Recipient: new address with region
   - Parcels: one parcel with weight and pieces
 - Expected outcome:
@@ -405,17 +502,18 @@ CommitShipment --> End(["End Transaction"])
   - Shipment created with tracking number and initial event
   - Notification sent asynchronously
 
-#### Example 2: Multi-Parcel Express Shipment with Declared Value
+#### Example 2: Multi-Parcel Express Shipment with Declared Value and Saved Recipient
 - Inputs:
   - Service level: EXPRESS
   - Pickup date: today
   - Sender: new address
-  - Recipient: existing saved address
+  - Recipient: copied from saved address with option to save
   - Parcels: three parcels, including one with declared value
 - Expected outcome:
   - Higher price due to service multiplier and additional pieces
   - All parcels persisted under the shipment
   - Tracking number allocated uniquely
+  - Recipient address optionally saved for future use
   - Notification sent asynchronously
 
 #### Handling Validation Errors
@@ -447,6 +545,8 @@ SA --> AUTH["auth.ts"]
 SA --> NOTIF["notifications.ts"]
 UI["new-shipment-form.tsx"] --> SA
 UI --> QA["quote.actions.ts"]
+UI --> AM["account.actions.ts"]
+AM --> AS["account.service.ts"]
 QA --> RATING
 ```
 
@@ -462,6 +562,8 @@ QA --> RATING
 - [notifications.ts:49-108](file://lib/notifications.ts#L49-L108)
 - [new-shipment-form.tsx:89-163](file://components/shipment/new-shipment-form.tsx#L89-L163)
 - [quote.actions.ts:27-64](file://server/quote.actions.ts#L27-L64)
+- [account.actions.ts:1-86](file://server/account.actions.ts#L1-L86)
+- [account.service.ts:1-122](file://server/account.service.ts#L1-L122)
 
 **Section sources**
 - [shipment.actions.ts:1-145](file://server/shipment.actions.ts#L1-L145)
@@ -475,6 +577,8 @@ QA --> RATING
 - [notifications.ts:49-108](file://lib/notifications.ts#L49-L108)
 - [new-shipment-form.tsx:89-163](file://components/shipment/new-shipment-form.tsx#L89-L163)
 - [quote.actions.ts:27-64](file://server/quote.actions.ts#L27-L64)
+- [account.actions.ts:1-86](file://server/account.actions.ts#L1-L86)
+- [account.service.ts:1-122](file://server/account.service.ts#L1-L122)
 
 ## Performance Considerations
 - Use batched database operations where possible; the current implementation already batches address creation.
@@ -482,6 +586,7 @@ QA --> RATING
 - Cache service levels and zones if they change infrequently to reduce database reads.
 - Monitor notification delivery failures and implement retry strategies for critical events.
 - Ensure database indexes on frequently queried fields like userId, status, and createdAt remain effective.
+- **Optimize saved address queries with proper indexing on userId and createdAt fields.**
 
 [No sources needed since this section provides general guidance]
 
@@ -493,18 +598,29 @@ Common issues and resolutions:
 - Pricing configuration incomplete: Ensure service zones, service levels, and rate rules are configured in the database.
 - Tracking number allocation failure: Retry creating the shipment; the system handles collisions automatically.
 - Notification failures: Check SMTP configuration and notification preferences; logs will record failures.
+- **Address management issues**: Verify user permissions and address ownership; check zone resolution for postal codes.
 
 Operational tips:
 - Inspect the first validation error message for quick fixes.
 - Confirm zone mapping for postal codes if quotes seem incorrect.
 - Verify database connectivity and Prisma client logging in development.
+- **Test saved address functionality across different user sessions to ensure proper isolation.**
 
 **Section sources**
 - [shipment.actions.ts:49-74](file://server/shipment.actions.ts#L49-L74)
 - [rating.ts:31-40](file://lib/rating.ts#L31-L40)
 - [notifications.ts:94-108](file://lib/notifications.ts#L94-L108)
+- [account.actions.ts:34-46](file://server/account.actions.ts#L34-L46)
 
 ## Conclusion
-The shipment creation workflow in Timberland combines robust validation, secure authentication, flexible multi-parcel support, and reliable pricing calculations. By integrating zone resolution, service level selection, and unique tracking number generation, it ensures accurate and consistent data persistence. Asynchronous notifications provide timely updates without blocking core operations. Following the guidelines and examples in this document will help developers and operators understand, maintain, and extend the shipment creation process effectively.
+The shipment creation workflow in Timberland combines robust validation, secure authentication, flexible multi-parcel support, and reliable pricing calculations. By integrating zone resolution, service level selection, and unique tracking number generation, it ensures accurate and consistent data persistence. Asynchronous notifications provide timely updates without blocking core operations.
+
+**Enhanced Features:**
+- **Comprehensive saved address management** with complete CRUD operations
+- **Improved user experience** through address copying and saving capabilities
+- **Server-side service integration** for efficient address data management
+- **Enhanced address picker component** with real-time population and seamless integration
+
+Following the guidelines and examples in this document will help developers and operators understand, maintain, and extend the shipment creation process effectively.
 
 [No sources needed since this section summarizes without analyzing specific files]

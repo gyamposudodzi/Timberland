@@ -17,6 +17,7 @@
 - [dashboard.spec.ts](file://tests/e2e/dashboard.spec.ts)
 - [ops.spec.ts](file://tests/e2e/ops.spec.ts)
 - [helpers.ts](file://tests/e2e/helpers.ts)
+- [new-shipment-form.tsx](file://components/shipment/new-shipment-form.tsx)
 - [pricing.ts](file://lib/pricing.ts)
 - [shipment-status.ts](file://lib/shipment-status.ts)
 - [tracking-number.ts](file://lib/tracking-number.ts)
@@ -28,6 +29,7 @@
 - Expanded password reset flow testing with single-use token validation and security edge cases
 - Enhanced dashboard functionality testing with status filtering and search capabilities
 - Added back office operations testing for role-based access control and shipment management
+- **Updated shipping E2E tests to include saved address copying validation through the recipient field picker**
 - Updated E2E test architecture diagrams to reflect the expanded test coverage
 - Enhanced troubleshooting guide with new test-specific debugging techniques
 
@@ -62,7 +64,7 @@ end
 subgraph "E2E Tests (Playwright)"
 PW["playwright.config.ts"]
 EA["auth.spec.ts<br/>Authentication flows"]
-ES["shipping.spec.ts<br/>Shipping workflows"]
+ES["shipping.spec.ts<br/>Shipping workflows + saved address copying"]
 ET["tracking.spec.ts<br/>Tracking functionality"]
 ECRUD["address-crud.spec.ts<br/>Address CRUD operations"]
 EPW["password-reset.spec.ts<br/>Password reset flows"]
@@ -74,6 +76,7 @@ subgraph "Libraries Under Test"
 LP["lib/pricing.ts<br/>Quote engine"]
 LS["lib/shipment-status.ts<br/>State machine"]
 LN["lib/tracking-number.ts<br/>Code generator"]
+NSF["components/shipment/new-shipment-form.tsx<br/>Shipment form with address picker"]
 end
 VT --> TP
 VT --> TS
@@ -89,6 +92,7 @@ TP --> LP
 TS --> LS
 TN --> LN
 ET --> EH
+ES --> NSF
 ```
 
 **Diagram sources**
@@ -105,6 +109,7 @@ ET --> EH
 - [dashboard.spec.ts:1-44](file://tests/e2e/dashboard.spec.ts#L1-L44)
 - [ops.spec.ts:1-118](file://tests/e2e/ops.spec.ts#L1-L118)
 - [helpers.ts:1-56](file://tests/e2e/helpers.ts#L1-L56)
+- [new-shipment-form.tsx:54-128](file://components/shipment/new-shipment-form.tsx#L54-L128)
 
 **Section sources**
 - [vitest.config.ts:1-15](file://vitest.config.ts#L1-L15)
@@ -132,10 +137,17 @@ This section summarizes the core libraries under test and their responsibilities
   - Supports injectable randomness via options for deterministic tests
   - **Test Coverage**: Ensures valid code generation, tamper detection, normalization handling, and uniqueness across multiple generations
 
+- New shipment form component (`components/shipment/new-shipment-form.tsx`)
+  - Client-side form with address picker functionality for both sender and recipient fields
+  - Includes saved address copying feature through dropdown selection
+  - Handles parcel management, quote estimation, and shipment creation workflow
+  - **Test Coverage**: Validated through E2E tests for address copying functionality and complete shipment creation flow
+
 **Section sources**
 - [pricing.ts:1-89](file://lib/pricing.ts#L1-L89)
 - [shipment-status.ts:1-77](file://lib/shipment-status.ts#L1-L77)
 - [tracking-number.ts:1-57](file://lib/tracking-number.ts#L1-L57)
+- [new-shipment-form.tsx:1-319](file://components/shipment/new-shipment-form.tsx#L1-L319)
 
 ## Architecture Overview
 The testing architecture consists of two complementary runners with distinct responsibilities:
@@ -206,8 +218,7 @@ flowchart TD
 Start(["Input: rate + parcels"]) --> Clean["Normalize inputs<br/>positive() and round2()"]
 Clean --> Aggregate["Aggregate weightTotalKg and piecesTotal"]
 Aggregate --> Charges["Compute weightCharge and pieceCharge"]
-Charges --> Subtotal["Compute subtotalBeforeService"]
-Subtotal --> ApplyService["Apply serviceMultiplier -> afterService"]
+Subtotal["Compute subtotalBeforeService"] --> ApplyService["Apply serviceMultiplier -> afterService"]
 ApplyService --> Floor{"afterService < minPrice?"}
 Floor --> |Yes| SetMin["Set total = minPrice<br/>minPriceApplied = true"]
 Floor --> |No| KeepAfter["Set total = afterService"]
@@ -314,6 +325,7 @@ VerifyCheck --> |Yes| True["Return true"]
 - User flow coverage
   - Authentication: login success/failure, route guards, logout functionality
   - Shipment creation: authenticated flow, redirect handling, dashboard listing, guest visibility constraints
+  - **Saved address copying**: validated through recipient field picker with dropdown selection and field population
   - Address management: full CRUD operations with validation and error handling
   - Password reset: secure token flow with single-use validation and account enumeration protection
   - Dashboard operations: status filtering, search functionality, and list management
@@ -332,6 +344,9 @@ App->>DB : Authenticate user
 DB-->>App : Session established
 App-->>Browser : Redirect to /account
 Browser->>App : Create new shipment
+Browser->>App : Select saved address from dropdown
+App->>App : Copy address fields to recipient
+Browser->>App : Submit shipment form
 App->>DB : Persist shipment + tracking number
 DB-->>App : Confirmation
 Browser->>App : Manage addresses (CRUD)
@@ -356,6 +371,7 @@ App-->>Browser : Render masked view
 - [ops.spec.ts:1-118](file://tests/e2e/ops.spec.ts#L1-L118)
 - [helpers.ts:1-56](file://tests/e2e/helpers.ts#L1-L56)
 - [playwright.config.ts:1-32](file://playwright.config.ts#L1-L32)
+- [new-shipment-form.tsx:69-83](file://components/shipment/new-shipment-form.tsx#L69-L83)
 
 **Section sources**
 - [auth.spec.ts:1-37](file://tests/e2e/auth.spec.ts#L1-L37)
@@ -387,6 +403,7 @@ PT --> LP["lib/pricing.ts"]
 ST --> LS["lib/shipment-status.ts"]
 TT --> LN["lib/tracking-number.ts"]
 ET --> EH["tests/e2e/helpers.ts"]
+ES --> NSF["components/shipment/new-shipment-form.tsx"]
 EH --> PRISMA["@prisma/client"]
 ```
 
@@ -404,6 +421,7 @@ EH --> PRISMA["@prisma/client"]
 - [dashboard.spec.ts:1-44](file://tests/e2e/dashboard.spec.ts#L1-L44)
 - [ops.spec.ts:1-118](file://tests/e2e/ops.spec.ts#L1-L118)
 - [helpers.ts:1-56](file://tests/e2e/helpers.ts#L1-L56)
+- [new-shipment-form.tsx:1-319](file://components/shipment/new-shipment-form.tsx#L1-L319)
 
 **Section sources**
 - [vitest.config.ts:1-15](file://vitest.config.ts#L1-L15)
@@ -452,6 +470,10 @@ EH --> PRISMA["@prisma/client"]
   - Server action clicks may fail if they occur before the component hydrates. Use the provided `submitUntil` helper which includes retry logic
 - Role-based access failures
   - Ensure proper test users exist in the database (demo user for customers, ops user for back office operations)
+- Saved address copying test failures
+  - Ensure saved addresses exist in the database before running shipping tests
+  - Verify the recipient address picker dropdown is properly populated with saved addresses
+  - Check that address IDs match between the dropdown options and the actual saved address records
 
 **Section sources**
 - [ci.yml:28-30](file://.github/workflows/ci.yml#L28-L30)
@@ -459,6 +481,7 @@ EH --> PRISMA["@prisma/client"]
 - [helpers.ts:23-41](file://tests/e2e/helpers.ts#L23-L41)
 - [address-crud.spec.ts:21-33](file://tests/e2e/address-crud.spec.ts#L21-L33)
 - [ops.spec.ts:26-46](file://tests/e2e/ops.spec.ts#L26-L46)
+- [shipping.spec.ts:55-71](file://tests/e2e/shipping.spec.ts#L55-L71)
 
 ### Debugging Failing Tests
 - Unit tests
@@ -472,9 +495,11 @@ EH --> PRISMA["@prisma/client"]
   - Add strategic pauses with `await page.pause()` for manual inspection
   - For hydration issues, add delays or use retry patterns similar to the `submitUntil` helper
   - Check database state using Prisma Studio: `npm run db:studio`
+  - For saved address copying issues, inspect the dropdown element and verify option values are correctly populated
 
 **Section sources**
 - [playwright.config.ts:17-23](file://playwright.config.ts#L17-L23)
+- [shipping.spec.ts:55-71](file://tests/e2e/shipping.spec.ts#L55-L71)
 
 ### CI/CD Integration
 - Quality job
@@ -510,4 +535,4 @@ RunE2E --> Report["Upload HTML Report on Failure"]
 - [ci.yml:40-94](file://.github/workflows/ci.yml#L40-L94)
 
 ## Conclusion
-Timberland's comprehensive testing strategy combines fast, isolated unit tests with robust E2E scenarios to ensure application reliability. Unit tests focus on pure business logic—pricing calculations, state transitions, and utility functions—while E2E tests validate critical user journeys across authentication, shipment creation, address management, password reset, dashboard operations, back office functionality, and tracking. The testing architecture leverages Vitest for rapid feedback on core algorithms and Playwright for realistic user interaction testing against a real database and application stack. The expanded test coverage now includes comprehensive address CRUD operations, secure password reset flows, enhanced dashboard functionality, and back office operations with proper role-based access control. The configuration and CI pipeline ensure consistent execution, meaningful reporting, and stable outcomes across development and production environments. By following the patterns and guidelines outlined here, contributors can extend coverage confidently and maintain high reliability across all application features.
+Timberland's comprehensive testing strategy combines fast, isolated unit tests with robust E2E scenarios to ensure application reliability. Unit tests focus on pure business logic—pricing calculations, state transitions, and utility functions—while E2E tests validate critical user journeys across authentication, shipment creation, address management, password reset, dashboard operations, back office functionality, and tracking. The testing architecture leverages Vitest for rapid feedback on core algorithms and Playwright for realistic user interaction testing against a real database and application stack. The expanded test coverage now includes comprehensive address CRUD operations, secure password reset flows, enhanced dashboard functionality, back office operations with proper role-based access control, and **saved address copying validation through the recipient field picker**. The configuration and CI pipeline ensure consistent execution, meaningful reporting, and stable outcomes across development and production environments. By following the patterns and guidelines outlined here, contributors can extend coverage confidently and maintain high reliability across all application features.
