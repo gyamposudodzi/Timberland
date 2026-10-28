@@ -24,6 +24,7 @@
 - Added address copying functionality allowing users to select from saved addresses during booking
 - Improved default sender population using most recent saved address instead of just user profile
 - Updated UI components to support address selection dropdowns for both sender and recipient fields
+- **NEW**: Added optional recipient saving functionality during shipment creation with custom label support
 - Enhanced user experience with seamless integration between address book and shipment creation workflows
 
 ## Table of Contents
@@ -34,19 +35,21 @@
 5. [Detailed Component Analysis](#detailed-component-analysis)
 6. [Address Book Management System](#address-book-management-system)
 7. [Enhanced Shipment Workflow Integration](#enhanced-shipment-workflow-integration)
-8. [Dependency Analysis](#dependency-analysis)
-9. [Performance Considerations](#performance-considerations)
-10. [Troubleshooting Guide](#troubleshooting-guide)
-11. [Conclusion](#conclusion)
+8. [Recipient Saving Functionality](#recipient-saving-functionality)
+9. [Dependency Analysis](#dependency-analysis)
+10. [Performance Considerations](#performance-considerations)
+11. [Troubleshooting Guide](#troubleshooting-guide)
+12. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains how addresses are created, stored, validated, and associated with users and shipments in the shipment system. It covers the enhanced dual address management approach: a dedicated address book for persistent user-owned addresses with full CRUD operations, and streamlined address creation during shipment booking with integrated address copying functionality. The system includes comprehensive validation rules, zone assignment logic, integration with pricing, and user-to-address relationships. It also documents address reuse patterns during booking, data normalization behavior, duplicate handling, and geographic validation through the zone system.
+This document explains how addresses are created, stored, validated, and associated with users and shipments in the shipment system. It covers the enhanced dual address management approach: a dedicated address book for persistent user-owned addresses with full CRUD operations, and streamlined address creation during shipment booking with integrated address copying functionality. The system includes comprehensive validation rules, zone assignment logic, integration with pricing, and user-to-address relationships. It also documents address reuse patterns during booking, data normalization behavior, duplicate handling, geographic validation through the zone system, and the new optional recipient saving feature that allows users to persist recipient addresses to their address book with custom labels.
 
 ## Project Structure
 Address-related functionality spans database schema definitions, server-side actions, client-side forms, and pricing/zone utilities across two distinct workflows:
 
 - **Address Book Management**: Dedicated system for saving and managing user-owned addresses with full CRUD operations
 - **Enhanced Shipment Address Creation**: Temporary address creation during shipment booking process with integrated address copying
+- **Recipient Saving Feature**: Optional functionality to save recipient addresses to the address book during shipment creation
 - Database schema defines the `Address` model supporting both use cases with optional user association
 - Server actions handle both address book operations and shipment-related address creation
 - Client components provide separate interfaces for address management and shipment booking with address selection capabilities
@@ -68,6 +71,7 @@ RATING --> DB
 ZONES --> DB
 AS["getSavedAddresses<br/>Service Layer"] --> DB
 NSF["New Shipment Page<br/>Data Loading"] --> UI2
+RSF["Recipient Saving<br/>Optional Feature"] --> AA
 ```
 
 **Diagram sources**
@@ -97,6 +101,7 @@ NSF["New Shipment Page<br/>Data Loading"] --> UI2
 - **Pricing Integration**: Destination postal code determines the zone used to calculate quotes via rate rules and service level multipliers.
 - **User Association**: Saved addresses are created under the authenticated user's ID during address book operations, while shipment addresses may or may not be associated with users.
 - **Address Copying**: Enhanced UI allows users to copy saved addresses directly into shipment forms through dropdown selection.
+- **Recipient Saving**: Optional functionality to persist recipient addresses to the user's address book with custom labels during shipment creation.
 
 **Section sources**
 - [schema.prisma:131-154](file://prisma/schema.prisma#L131-L154)
@@ -117,9 +122,11 @@ The address lifecycle now follows two enhanced flows with improved integration:
 1. The new shipment page loads saved addresses and pre-populates the latest one as default sender
 2. Users can select from saved addresses using dropdown menus for both sender and recipient fields
 3. The user fills sender and recipient address fields in the form with optional address copying
-4. The client optionally estimates pricing using destination postal code and parcel totals
-5. On submission, the server validates the payload, checks the selected service level, computes a quote, resolves zones for both addresses, creates address records, and then creates the shipment with parcels and initial tracking event
-6. A notification is fired asynchronously after successful creation
+4. **NEW**: Users can opt-in to save the recipient address with a custom label
+5. The client optionally estimates pricing using destination postal code and parcel totals
+6. On submission, the server validates the payload, checks the selected service level, computes a quote, resolves zones for both addresses, creates address records, and then creates the shipment with parcels and initial tracking event
+7. **NEW**: If recipient saving is enabled, the recipient address is asynchronously saved to the user's address book
+8. A notification is fired asynchronously after successful creation
 
 ```mermaid
 sequenceDiagram
@@ -140,12 +147,15 @@ AS-->>AB : Success + Revalidate Path
 NSP->>DB : Load saved addresses
 NSP->>NSF : Pass saved addresses + default sender
 NSF->>NSF : User selects saved address from dropdown
+NSF->>NSF : User opts to save recipient with label
 NSF->>SA : Submit Shipment (sender, recipient, parcels)
 SA->>DB : Validate service level
 SA->>Zones : Resolve sender/recipient zones
 SA->>DB : Create shipment addresses (may not have userId)
 SA->>DB : Create shipment + parcels + tracking event
 SA-->>NSF : Tracking number + shipment ID
+NSF->>AS : Save recipient address (optional)
+AS->>DB : Persist recipient to address book
 ```
 
 **Diagram sources**
@@ -233,6 +243,7 @@ Validation rules ensure:
 - Region is optional.
 - Postal code must be present and within length bounds.
 - Country defaults to a two-letter code.
+- Label is optional and limited to 60 characters.
 
 Normalization behaviors:
 - Trimming whitespace from all text inputs.
@@ -245,7 +256,7 @@ Start(["Form Submission"]) --> Parse["Parse JSON payloads"]
 Parse --> Validate["Validate with Zod schemas"]
 Validate --> Valid{"Valid?"}
 Valid --> |No| Error["Return validation error"]
-Valid --> |Yes| Normalize["Normalize optional fields<br/>line2 -> null if empty<br/>region -> null if empty<br/>country default 'US'"]
+Valid --> |Yes| Normalize["Normalize optional fields<br/>line2 -> null if empty<br/>region -> null if empty<br/>country default 'US'<br/>label -> null if empty"]
 Normalize --> Persist["Persist Address Records"]
 Persist --> End(["Done"])
 ```
@@ -554,6 +565,95 @@ EmptyFields --> FormReady
 - [new-shipment-form.tsx:69-83](file://components/shipment/new-shipment-form.tsx#L69-L83)
 - [page.tsx:17-54](file://app/account/new-shipment/page.tsx#L17-L54)
 
+## Recipient Saving Functionality
+
+### Overview
+The enhanced shipment workflow now includes optional recipient saving functionality that allows users to persist recipient addresses to their address book during shipment creation. This feature provides a seamless way to build up a user's address book without requiring separate navigation to the address management interface.
+
+### Key Features
+- **Opt-in Functionality**: Users can choose whether to save recipient addresses by checking a checkbox
+- **Custom Labels**: When saving recipients, users can assign descriptive labels (e.g., "Office", "Mom's house") for easy identification
+- **Best-Effort Implementation**: Recipient saving occurs asynchronously after shipment creation without blocking the main flow
+- **Full Address Persistence**: All recipient address fields are preserved including contact name, phone, address details, and location information
+- **Label Display**: Saved addresses display custom labels prominently in the address book interface
+
+### Implementation Details
+
+#### UI Components
+The recipient saving feature is integrated into the shipment form with a checkbox and conditional label field:
+
+```mermaid
+flowchart TD
+Form["Shipment Form"] --> Checkbox["Save recipient checkbox"]
+Checkbox --> Checked{"Checked?"}
+Checked --> |Yes| ShowLabel["Show label input field"]
+Checked --> |No| SkipLabel["Skip label input"]
+ShowLabel --> LabelField["Custom label field"]
+LabelField --> Submit["Submit shipment"]
+SkipLabel --> Submit
+```
+
+**Diagram sources**
+- [new-shipment-form.tsx:259-281](file://components/shipment/new-shipment-form.tsx#L259-L281)
+
+#### Data Flow
+The recipient saving process follows this sequence:
+
+1. **User Interaction**: User checks the "Save this recipient to my address book" checkbox
+2. **Label Entry**: If checked, user enters an optional custom label
+3. **Form Submission**: User submits the shipment form
+4. **Shipment Creation**: Primary shipment creation proceeds normally
+5. **Asynchronous Saving**: If recipient saving was enabled, the recipient address is saved to the address book
+6. **Navigation**: User is redirected to the shipment confirmation page
+
+```mermaid
+sequenceDiagram
+participant User as "User"
+participant Form as "Shipment Form"
+participant SA as "createShipmentAction"
+participant AA as "saveAddressAction"
+participant DB as "Database"
+User->>Form : Check "Save recipient" box
+User->>Form : Enter optional label
+User->>Form : Submit shipment
+Form->>SA : Create shipment
+SA->>DB : Create shipment + addresses
+SA-->>Form : Return shipment ID
+Form->>AA : Save recipient address (if enabled)
+AA->>DB : Persist to address book
+AA-->>Form : Best-effort success/failure
+Form->>User : Redirect to shipment confirmation
+```
+
+**Diagram sources**
+- [new-shipment-form.tsx:203-224](file://components/shipment/new-shipment-form.tsx#L203-L224)
+- [account.actions.ts:30-73](file://server/account.actions.ts#L30-L73)
+
+#### Form State Management
+The implementation maintains separate state variables for recipient saving:
+- `saveRecipient`: Boolean flag controlling whether to save the recipient
+- `recipientLabel`: String value for the custom label (max 60 characters)
+- Conditional rendering of the label input field based on the checkbox state
+
+#### Error Handling
+The recipient saving process uses best-effort error handling:
+- Failures in saving the recipient address do not prevent shipment creation
+- Errors are caught and silently ignored to maintain smooth user experience
+- The primary shipment creation takes precedence over recipient saving
+
+### User Experience Benefits
+- **Convenience**: Eliminates need to navigate away from shipment creation to save addresses
+- **Flexibility**: Users can choose which recipients to save based on context
+- **Organization**: Custom labels help organize frequently used addresses
+- **Non-blocking**: Recipient saving doesn't interfere with the primary shipment workflow
+- **Seamless Integration**: The feature feels like a natural extension of the shipment creation process
+
+**Section sources**
+- [new-shipment-form.tsx:149-150](file://components/shipment/new-shipment-form.tsx#L149-L150)
+- [new-shipment-form.tsx:209-222](file://components/shipment/new-shipment-form.tsx#L209-L222)
+- [new-shipment-form.tsx:259-281](file://components/shipment/new-shipment-form.tsx#L259-L281)
+- [account.actions.ts:30-73](file://server/account.actions.ts#L30-L73)
+
 ## Dependency Analysis
 Key dependencies between address-related modules:
 
@@ -615,6 +715,7 @@ AS["account.service.ts"] --> PAGE2
 - **Quote estimation**: The pricing engine performs database reads for zone, service level, and rate rule; caching these configurations may reduce latency.
 - **Address book optimization**: The getSavedAddresses function limits results to 20 most recent addresses and includes only necessary zone information.
 - **Enhanced loading**: The new shipment page uses parallel loading to fetch services, saved addresses, and user data simultaneously for optimal performance.
+- **Asynchronous recipient saving**: Recipient saving occurs after the primary shipment creation completes, preventing any performance impact on the main workflow.
 
 [No sources needed since this section provides general guidance]
 
@@ -635,6 +736,12 @@ Common issues and resolutions:
 - **Invalid parcel data**: Confirm parcels JSON is valid and conforms to the parcel schema.
 - **Notification delivery**: Notifications are fire-and-forget; failures are logged silently. Check logs if confirmation emails are expected.
 
+### Recipient Saving Issues
+- **Recipient not saving**: Verify that the "Save this recipient to my address book" checkbox is checked and the form is submitted successfully.
+- **Label not appearing**: Check that the label field contains valid text (max 60 characters) when the recipient saving option is enabled.
+- **Asynchronous saving failures**: Recipient saving is best-effort; failures won't prevent shipment creation. Check browser console for any JavaScript errors.
+- **Address book not refreshing**: The address book should automatically refresh after successful recipient saving. Try refreshing the page if the new address doesn't appear immediately.
+
 **Section sources**
 - [account.actions.ts:34-46](file://server/account.actions.ts#L34-L46)
 - [account.actions.ts:63-66](file://server/account.actions.ts#L63-L66)
@@ -643,10 +750,13 @@ Common issues and resolutions:
 - [shipment.actions.ts:55-60](file://server/shipment.actions.ts#L55-L60)
 - [shipment.actions.ts:49-53](file://server/shipment.actions.ts#L49-L53)
 - [shipment.actions.ts:135-142](file://server/shipment.actions.ts#L135-L142)
+- [new-shipment-form.tsx:209-222](file://components/shipment/new-shipment-form.tsx#L209-L222)
 
 ## Conclusion
-Address management in the shipment system now provides a comprehensive enhanced approach: a dedicated address book for persistent user-owned addresses with full CRUD operations, and streamlined address creation during shipment booking with integrated address copying functionality. The new address book system offers robust security, validation, and zone resolution integration, while the enhanced shipment workflow significantly improves user experience through intelligent default sender population and convenient address selection dropdowns.
+Address management in the shipment system now provides a comprehensive enhanced approach: a dedicated address book for persistent user-owned addresses with full CRUD operations, and streamlined address creation during shipment booking with integrated address copying functionality. The new address book system offers robust security, validation, and zone resolution integration, while the enhanced shipment workflow significantly improves user experience through intelligent default sender population, convenient address selection dropdowns, and the new optional recipient saving feature.
 
 The architecture maintains backward compatibility while providing enhanced functionality for address organization and reuse. The system cleanly separates concerns across client forms, server actions, validation, zone mapping, and pricing, ensuring maintainability and clarity for both user-facing features and backend operations. The enhanced integration between the address book and shipment workflow represents a significant improvement in user experience, reducing repetitive data entry and providing seamless access to saved addresses during the booking process.
 
-Future enhancements could include advanced deduplication algorithms, international postal code validation, geocoding services for more precise location data, and additional smart features like address suggestions based on previous shipments.
+The new recipient saving functionality adds another layer of convenience by allowing users to build their address book organically during normal shipment operations, with optional custom labels for better organization. This feature demonstrates thoughtful UX design by making address persistence non-intrusive while providing powerful organization capabilities.
+
+Future enhancements could include advanced deduplication algorithms, international postal code validation, geocoding services for more precise location data, additional smart features like address suggestions based on previous shipments, and enhanced recipient management capabilities such as bulk operations or address categorization.

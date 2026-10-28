@@ -41,25 +41,17 @@ test.afterAll(async () => {
 });
 
 test.describe("admin (full control)", () => {
-  test("STAFF cannot open the admin console", async ({ page }) => {
-    await login(page, "ops@timberland.example", "ops1234");
-    await page.goto("/ops/admin");
-    // Page-level gate bounces non-admins back to the shipment queue.
-    await expect(page).toHaveURL(/\/ops$/);
-    await expect(page.getByRole("heading", { name: /admin console/i })).toHaveCount(0);
-  });
-
-  test("admin changes a user's role from the console", async ({ page }) => {
+  test("admin promotes a customer to admin from the console", async ({ page }) => {
     const email = `e2e-role-${Date.now()}@timberland.example`;
     await createScratchUser(email);
 
     await login(page, "admin@timberland.example", "admin1234");
-    await page.goto("/ops/admin");
-    await expect(page.getByRole("heading", { name: /admin console/i })).toBeVisible();
+    await page.goto("/admin/users");
+    await expect(page.getByText(/two roles only/i)).toBeVisible();
 
     const row = page.getByTestId("user-row").filter({ hasText: email });
     await expect(row).toBeVisible();
-    await row.locator("select").selectOption("STAFF");
+    await row.locator("select").selectOption("ADMIN");
 
     // Save is per-row, so scope the click + "Saved" signal to this row.
     const save = row.getByRole("button", { name: /save/i });
@@ -71,22 +63,22 @@ test.describe("admin (full control)", () => {
       await expect(row.getByText(/saved/i)).toBeVisible({ timeout: 10000 });
     }
 
-    expect(await getUserRole(email)).toBe("STAFF");
+    expect(await getUserRole(email)).toBe("ADMIN");
   });
 
   test("the admin's own row cannot be demoted (lockout guard)", async ({ page }) => {
     await login(page, "admin@timberland.example", "admin1234");
-    await page.goto("/ops/admin");
+    await page.goto("/admin/users");
     const selfRow = page.getByTestId("user-row").filter({ hasText: "admin@timberland.example" });
     await expect(selfRow.getByText(/that’s you/i)).toBeVisible();
     await expect(selfRow.locator("select")).toBeDisabled();
   });
 
-  test("admin forces an illegal status override that staff could not make", async ({ page }) => {
+  test("admin forces an illegal status override the state machine would reject", async ({ page }) => {
     const { id } = await createScratchShipment();
 
     await login(page, "admin@timberland.example", "admin1234");
-    await page.goto(`/ops/shipments/${id}`);
+    await page.goto(`/admin/shipments/${id}`);
 
     // CREATED → DELIVERED is not a legal state-machine transition.
     await page.getByLabel(/force status/i).selectOption("DELIVERED");
@@ -99,11 +91,11 @@ test.describe("admin (full control)", () => {
     const { id } = await createScratchShipment();
 
     await login(page, "admin@timberland.example", "admin1234");
-    await page.goto(`/ops/shipments/${id}`);
+    await page.goto(`/admin/shipments/${id}`);
 
     page.on("dialog", (d) => d.accept());
     await page.getByRole("button", { name: /delete shipment/i }).click();
-    await expect(page).toHaveURL(/\/ops$/, { timeout: 15000 });
+    await expect(page).toHaveURL(/\/admin$/, { timeout: 15000 });
 
     expect(await shipmentExists(id)).toBe(false);
   });

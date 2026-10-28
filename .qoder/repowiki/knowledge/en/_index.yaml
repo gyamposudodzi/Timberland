@@ -3,12 +3,124 @@ schema_version: 1
 locale: en-US
 branch: main
 nodes_managed: true
-exported_at: "2026-10-19T10:46:06Z"
+exported_at: "2026-10-22T14:36:17Z"
 modules:
     "":
-        dir_name: Timberland Courier & Delivery Web App (Next.js Full-Stack Monorepo)
-        title: Timberland Courier & Delivery Web App (Next.js Full-Stack Monorepo)
-        scope: []
+        dir_name: Timberland Courier Web App — Next.js Full-Stack Monorepo
+        title: Timberland Courier Web App — Next.js Full-Stack Monorepo
+        scope:
+            - README.md
+            - AGENTS.md
+            - DEMO_LOGINS.md
+            - .gitignore
+            - package.json
+            - package-lock.json
+            - next.config.ts
+            - tsconfig.json
+            - eslint.config.mjs
+            - vitest.config.ts
+            - playwright.config.ts
+            - docker-compose.yml
+            - middleware.ts
+            - types/
+            - .github/workflows/ci.yml
+        source_files: []
+        children:
+            - app_routes
+            - database_schema
+            - server_actions
+            - shared_lib
+            - tests
+            - ui_components
+        depends_on: []
+        related_to: []
+    app_routes:
+        dir_name: Next.js App Router Pages & Routes
+        title: Next.js App Router Pages & Routes
+        scope:
+            - app/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    database_schema:
+        dir_name: Timberland Courier Database Schema (Prisma + PostgreSQL)
+        title: Timberland Courier Database Schema (Prisma + PostgreSQL)
+        scope:
+            - prisma/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    server_actions:
+        dir_name: Timberland Courier Server Actions Layer
+        title: Timberland Courier Server Actions Layer
+        scope:
+            - server/
+        source_files: []
+        children:
+            - server_actions/account_admin
+            - server_actions/ops_tracking
+            - server_actions/shipment_notifications
+        depends_on: []
+        related_to: []
+    server_actions/account_admin:
+        dir_name: Customer Account & Admin Operations
+        title: Customer Account & Admin Operations
+        scope:
+            - server/account.actions.ts
+            - server/account.service.ts
+            - server/admin.actions.ts
+            - server/admin.service.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    server_actions/ops_tracking:
+        dir_name: Operations & Shipment Tracking Services
+        title: Operations & Shipment Tracking Services
+        scope:
+            - server/ops.actions.ts
+            - server/ops.service.ts
+            - server/tracking.service.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    server_actions/shipment_notifications:
+        dir_name: Shipment, Quote & Notification Server Actions
+        title: Shipment, Quote & Notification Server Actions
+        scope:
+            - server/shipment.actions.ts
+            - server/notification.actions.ts
+            - server/quote.actions.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    shared_lib:
+        dir_name: Shared Server-Side Utilities & Domain Library
+        title: Shared Server-Side Utilities & Domain Library
+        scope:
+            - lib/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    tests:
+        dir_name: Test Suite — Unit & E2E
+        title: Test Suite — Unit & E2E
+        scope:
+            - tests/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    ui_components:
+        dir_name: Timberland Customer UI Components
+        title: Timberland Customer UI Components
+        scope:
+            - components/
         source_files: []
         children: []
         depends_on: []

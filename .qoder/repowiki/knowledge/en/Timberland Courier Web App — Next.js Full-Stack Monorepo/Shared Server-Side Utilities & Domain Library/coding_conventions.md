@@ -1,0 +1,5 @@
+- Server-only modules opt into the Edge runtime boundary by importing `server-only` at the top of files that touch `process.env`, Prisma, or bcrypt.
+- Environment variables are accessed exclusively through getters on the exported `env` object in `lib/env.ts`, which throws on missing required values and returns typed sub-objects for grouped settings (smtp, google).
+- Input validation is centralized as Zod schemas per feature area, with corresponding TypeScript types derived via `z.infer<typeof schema>` and re-exported alongside the schema.
+- Pure business logic (pricing, zones, tracking numbers) is implemented as stateless functions with explicit interfaces, deliberately avoiding database or framework imports so they can be unit-tested directly.
+- Optional third-party integrations (Google OAuth, SMTP email) are gated behind boolean flags (`googleEnabled`, `emailEnabled`) derived from env, allowing the app to degrade gracefully when credentials are absent.

@@ -1,0 +1,1 @@
+Next.js App Router Server Actions (`"use server"`), Prisma client for all DB access, Zod via `addressSchema` for input validation, and `server-only` marker in service files to prevent client-side import.

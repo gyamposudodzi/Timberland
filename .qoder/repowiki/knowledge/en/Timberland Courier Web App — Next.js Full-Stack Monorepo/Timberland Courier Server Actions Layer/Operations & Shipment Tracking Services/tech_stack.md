@@ -1,0 +1,1 @@
+Next.js Server Components / Server Actions (`"use server"`), Prisma client with `$transaction`, Next.js `next/cache` revalidation, and role-based session gating via the project's `@/lib/auth`.

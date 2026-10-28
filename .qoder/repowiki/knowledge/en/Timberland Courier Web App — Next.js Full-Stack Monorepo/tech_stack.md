@@ -1,0 +1,1 @@
+Next.js 16 + React 19 + TypeScript 5 as the runtime; Prisma 6 + PostgreSQL 16 as the data layer; NextAuth v5 beta with `@auth/prisma-adapter`; Tailwind CSS v4 via `@tailwindcss/turbopack`; Zod v4 for validation; Vitest for unit tests and Playwright for E2E tests against the seeded DB.

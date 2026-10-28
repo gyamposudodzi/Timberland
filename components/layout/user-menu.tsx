@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import Link from "next/link";
-import { ChevronDown, LogOut, User, LayoutDashboard } from "lucide-react";
+import { ChevronDown, LogOut, LayoutDashboard, ShieldCheck } from "lucide-react";
 
 interface UserMenuProps {
   name: string;
@@ -17,7 +17,7 @@ export function UserMenu({ name, email, role, userId, signOutAction }: UserMenuP
   const [pending, startSignOut] = useTransition();
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const isStaff = role === "STAFF" || role === "ADMIN";
+  const isAdmin = role === "ADMIN";
   const label = name || email || userId;
   const initials = (label.trim()[0] ?? "?").toUpperCase();
 
@@ -78,10 +78,10 @@ export function UserMenu({ name, email, role, userId, signOutAction }: UserMenuP
               <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
               Profile
             </Link>
-            {isStaff && (
-              <Link href="/ops" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
-                <User className="h-4 w-4 text-muted-foreground" />
-                Ops
+            {isAdmin && (
+              <Link href="/admin" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
+                <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                Admin
               </Link>
             )}
             <form onSubmit={handleSignOut}>

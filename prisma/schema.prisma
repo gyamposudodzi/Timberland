@@ -14,9 +14,10 @@ datasource db {
 // Enums
 // ---------------------------------------------------------------------------
 
+// Two roles only: a normal account (CUSTOMER) and a full-control administrator
+// (ADMIN). There is no intermediate staff/back-office role.
 enum Role {
   CUSTOMER
-  STAFF
   ADMIN
 }
 

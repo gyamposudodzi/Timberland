@@ -1,0 +1,1 @@
+Server-side shared library for the Timberland courier web app, providing auth, Prisma client, env access, validation schemas, pricing/zone/domain logic, and email notifications.

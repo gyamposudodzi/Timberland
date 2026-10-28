@@ -1,0 +1,1 @@
+Database state is managed through Prisma migrations (`prisma migrate deploy` / `prisma migrate dev`) and the seed script runs via `prisma db seed` (or directly executing `prisma/seed.ts`); the seed requires `DATABASE_URL` and depends on the shared `lib/tracking-number` module for generating unique tracking numbers.

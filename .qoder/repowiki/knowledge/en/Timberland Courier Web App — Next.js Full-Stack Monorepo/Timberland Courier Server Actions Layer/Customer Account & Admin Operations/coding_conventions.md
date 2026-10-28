@@ -1,0 +1,5 @@
+- Server Action entry points accept `(prevActionResult | null, formData: FormData)` and return a typed `ActionResult` with `{ ok, error?, fieldErrors? }` shape consumed by the UI.
+- Ownership-scoped mutations use `where: { id, userId: session.user.id }` (or `deleteMany`/`updateMany`) so a mismatched id yields zero rows instead of leaking another user's data.
+- After every successful write, the action calls `revalidatePath` against every route that could display stale data (e.g. ops dashboard, public track page, account pages).
+- Admin-only paths begin by calling `getAdminSession()` and returning an early `{ ok: false, error: 'Administrator access required.' }` when the caller lacks the ADMIN role.
+- Service files are marked with `import 'server-only'` and contain no Next.js runtime code — they are pure Prisma/data-layer modules imported by both server actions and other server code.

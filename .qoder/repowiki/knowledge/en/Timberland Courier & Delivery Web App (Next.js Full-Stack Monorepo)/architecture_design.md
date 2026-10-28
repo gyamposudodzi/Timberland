@@ -1,9 +1,0 @@
-The project is a Next.js 16 App Router monolith with a clear layering:
-- `app/` — Route segments (pages, layouts, error/not-found) plus the Edge middleware entry at `middleware.ts` that guards `/account/*` via NextAuth's edge-safe `authorized` callback.
-- `components/` — Presentational React components grouped by feature (`auth`, `account`, `ops`, `quote`, `shipment`, `tracking`, `ui`). UI primitives live in `components/ui` (button, card, field, input, select, textarea, badge, alert, spinner).
-- `server/` — Server Actions (`*.actions.ts`) that are the only boundary touching the database; each action pairs with a domain service file (`*.service.ts`) for business logic. This keeps DB access out of components and pages.
-- `lib/` — Pure utilities and shared runtime: Prisma client (`db.ts`), NextAuth config split into edge-safe `auth.config.ts` + Node-only `auth.ts`, Zod schemas (`validation.ts`), pricing engine (`pricing.ts`, `rating.ts`), zone matching (`zones.ts`), tracking-number generation, notification dispatch, crypto helpers, env loader.
-- `prisma/schema.prisma` — Single source of truth for the PostgreSQL schema (User, Address, ServiceZone/ServiceLevel/RateRule, Shipment/Parcel, TrackingEvent, NotificationPreference/Log) with generated enums for Role, ShipmentStatus, PaymentMethod, NotificationChannel.
-- `types/next-auth.d.ts` — Extends NextAuth session types to include `id` and `role`.
-
-Dependency direction is strictly one-way: `app` → `components` + `server` actions → `lib` → Prisma client. The auth configuration is deliberately split so the edge middleware can run without Node-only dependencies (Prisma, bcrypt, nodemailer).

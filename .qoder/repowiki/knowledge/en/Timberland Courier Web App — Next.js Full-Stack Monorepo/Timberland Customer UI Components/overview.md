@@ -1,0 +1,1 @@
+Reusable React component library for the Timberland courier web app, providing base UI primitives, layout chrome, and domain-specific forms for tracking, quoting, authentication, account management, and admin operations.

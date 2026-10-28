@@ -1,1 +1,0 @@
-Next.js 16 App Router with Turbopack + Tailwind CSS v4 (`@tailwindcss/turbopack`), NextAuth v5 beta with JWT strategy and Prisma adapter, Prisma 6 client over PostgreSQL, Zod v4 for validation, Vitest for unit tests, Playwright for E2E, bcryptjs for password hashing, nodemailer for email delivery, class-variance-authority + clsx + tailwind-merge for component styling.

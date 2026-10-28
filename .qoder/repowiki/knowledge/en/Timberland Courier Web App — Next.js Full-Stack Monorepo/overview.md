@@ -1,0 +1,1 @@
+Next.js 16 full-stack monolith wiring the customer-facing routes, shared server actions, Prisma-backed services, UI components, and tests around a single PostgreSQL database.

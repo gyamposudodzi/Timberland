@@ -1,0 +1,5 @@
+- Base UI primitives in `components/ui/` are exported as forwardRef components with a `cn(...)`-merged className, using cva variants for style customization rather than prop-based branching.
+- Form fields are composed through the shared `Field` wrapper that renders label/hint/error markup, with child `Input`/`Select`/`Textarea` receiving matching `id`/`htmlFor` attributes.
+- Client-side mutations go through Next.js Server Actions imported from `@/server/*`, invoked via `useActionState` (for action-stateful forms) or `useTransition` (for fire-and-forget flows), with `pending` gating button disabled state and spinner rendering.
+- Feature components opt into interactivity by placing a `'use client'` directive at the top of the file, while layout/server-rendered components remain implicit Server Components.
+- Domain data types (e.g. `EditableShipment`, `TimelineEvent`) are declared locally inside the component file and re-exported when needed by parent routes, keeping type scope narrow.

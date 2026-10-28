@@ -1,0 +1,1 @@
+`npm run build` runs `prisma generate` before `next build`; `npm run db:migrate` drives Prisma migrations against the local Dockerized Postgres; `npm run test:e2e` runs Playwright against the same seeded database used by the app; `docker-compose up` starts the `timberland-db` service on port 5432.

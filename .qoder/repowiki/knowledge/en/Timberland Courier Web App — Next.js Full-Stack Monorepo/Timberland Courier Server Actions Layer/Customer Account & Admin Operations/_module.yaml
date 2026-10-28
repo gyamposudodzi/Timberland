@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: server_actions/account_admin
+title: Customer Account & Admin Operations
+scope:
+    - server/account.actions.ts
+    - server/account.service.ts
+    - server/admin.actions.ts
+    - server/admin.service.ts
+source_files: []
+depends_on: []
+related_to: []

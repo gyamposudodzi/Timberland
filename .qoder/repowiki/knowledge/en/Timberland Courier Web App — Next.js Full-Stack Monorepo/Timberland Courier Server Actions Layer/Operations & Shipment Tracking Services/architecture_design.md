@@ -1,0 +1,6 @@
+Three cooperating server-side modules with a clear read/write split:
+- `ops.service.ts` is the ops-only read layer: it gates access via `getOpsSession()` (role must be STAFF or ADMIN), exposes paginated `listShipmentsForOps`, dashboard `getStatusSummary`, and full-detail `getShipmentForOps` queries against Prisma.
+- `ops.actions.ts` is the write boundary: a single `addTrackingEventAction` Server Action that validates inputs, enforces the state machine (`canTransition` from `@/lib/shipment-status`), records a tracking event inside a Prisma `$transaction` together with the shipment status update, emits an async notification, and calls `revalidatePath` on all affected routes.
+- `tracking.service.ts` is the public/guest-facing read layer: `getTrackedShipment` builds a sanitized view that excludes sensitive fields (street address, contact name, price), filters events to `isPublic=true`, optionally verifies postal code or recipient surname to resist enumeration, and computes derived UI fields like `progressPercent`, `tone`, and `estimatedDelivery`.
+
+Dependency direction is one-way: actions depend on the service layer; services depend only on Prisma, auth, and shared `shipment-status` metadata. Both services import `server-only` to enforce they run exclusively on the server.

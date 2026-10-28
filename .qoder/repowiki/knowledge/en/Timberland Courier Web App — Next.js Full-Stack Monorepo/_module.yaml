@@ -1,0 +1,22 @@
+schema_version: 1
+module_path: ""
+title: Timberland Courier Web App — Next.js Full-Stack Monorepo
+scope:
+    - README.md
+    - AGENTS.md
+    - DEMO_LOGINS.md
+    - .gitignore
+    - package.json
+    - package-lock.json
+    - next.config.ts
+    - tsconfig.json
+    - eslint.config.mjs
+    - vitest.config.ts
+    - playwright.config.ts
+    - docker-compose.yml
+    - middleware.ts
+    - types/
+    - .github/workflows/ci.yml
+source_files: []
+depends_on: []
+related_to: []

@@ -4,30 +4,28 @@ Seed accounts created by `npm run db:seed`. Passwords are bcrypt-hashed in the
 database; these are the plaintext demo values. **Local/demo only — never use in
 production.**
 
+There are only **two roles**: `CUSTOMER` (a normal user) and `ADMIN` (full
+control). There is no separate staff/back-office role.
+
 ## Admin (full control)
 
-| Name       | Email                     | Password     | Can do                                                        |
-| ---------- | ------------------------- | ------------ | ------------------------------------------------------------ |
-| Ada Admin  | `admin@timberland.example`| `admin1234`  | Everything Staff can do, **plus**: force any shipment status (bypasses the state machine), edit price/payment/service/notes on any shipment, delete any shipment, and change account roles in the **Admin console** (`/ops/admin`). |
+| Name      | Email                      | Password    | Can do                                                                                                             |
+| --------- | -------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------ |
+| Ada Admin | `admin@timberland.example` | `admin1234` | Everything a customer can do, **plus** the back office at **`/admin`**: run the shipment queue, advance status, force any status (bypasses the state machine), edit price/payment/service/notes on any shipment, delete any shipment, and change account roles at **`/admin/users`**. |
 
 ## User / customer
 
-| Name          | Email                      | Password    | Can do                                                          |
-| ------------- | -------------------------- | ----------- | -------------------------------------------------------------- |
+| Name          | Email                      | Password    | Can do                                                                                          |
+| ------------- | -------------------------- | ----------- | ----------------------------------------------------------------------------------------------- |
 | Demo Customer | `demo@timberland.example`  | `demo1234`  | Customer dashboard, new shipments, address book, notifications. Owns the seeded shipments A/B/C and saved addresses. |
-| Reset Target  | `reset@timberland.example` | `reset1234` | Dedicated customer for the password-reset demo/e2e. No shipments. |
-
-## Staff / back office (limited)
-
-| Name      | Email                    | Password  | Can do                                                                 |
-| --------- | ------------------------ | --------- | --------------------------------------------------------------------- |
-| Ops Staff | `ops@timberland.example` | `ops1234` | Operations queue (`/ops`): advance shipments **through the valid state machine** and add internal notes. No admin console, no status override/edit/delete. |
+| Reset Target  | `reset@timberland.example` | `reset1234` | Dedicated customer for the password-reset demo/e2e. No shipments.                               |
 
 ## Sign-in URLs
 
-- Customers & staff/admin all sign in at **`/login`**.
-- After signing in, Staff/Admin see an **Ops** item in the account menu → `/ops`.
-- Only Admin additionally sees the **Admin console** link in the ops sidebar → `/ops/admin`.
+- Customers and admins all sign in at **`/login`**.
+- Only an Admin sees the **Admin** item in the account menu → **`/admin`** (shipment queue).
+- The account/role console is at **`/admin/users`**.
+- Customers are redirected away from `/admin` (they have no back-office access).
 
 ## Guest tracking (no login)
 

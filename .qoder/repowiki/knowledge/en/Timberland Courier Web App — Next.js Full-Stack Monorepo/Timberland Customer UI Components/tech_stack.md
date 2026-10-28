@@ -1,0 +1,1 @@
+React Server Components + Client Components, Tailwind CSS with design tokens (primary/secondary/destructive/success/warning), class-variance-authority for variant-driven styling, lucide-react icons, Next.js App Router conventions (`"use client"`, `"use server"`, `useActionState`).

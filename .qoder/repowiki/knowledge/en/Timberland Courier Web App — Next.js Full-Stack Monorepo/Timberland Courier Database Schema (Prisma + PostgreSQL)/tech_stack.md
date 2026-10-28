@@ -1,0 +1,1 @@
+Prisma ORM with `prisma-client-js` generator against PostgreSQL; seed uses `bcryptjs` for password hashing and imports `generateTrackingNumber` from `../lib/tracking-number`.

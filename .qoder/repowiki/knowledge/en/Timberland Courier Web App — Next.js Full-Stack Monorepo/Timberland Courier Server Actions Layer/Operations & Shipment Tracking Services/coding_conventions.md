@@ -1,0 +1,6 @@
+- Server-only modules opt into runtime enforcement by importing `server-only` at the top of every file in this scope.
+- Back-office reads are gated through a shared `getOpsSession()` helper that returns null unless the session user has a STAFF or ADMIN role, rather than checking roles inline.
+- Write mutations go through Next.js Server Actions that accept `(prev, formData)` signatures and return a typed `AdvanceResult` union instead of throwing errors directly.
+- Database writes that touch multiple tables (event + shipment) are wrapped in `prisma.$transaction` to keep them atomic.
+- After mutating data, affected routes are refreshed via `revalidatePath` calls covering both ops and customer-facing URLs.
+- Public tracking responses are constructed as hand-crafted DTOs (`PublicTracking`, `PublicTrackingEvent`) that deliberately exclude sensitive fields rather than returning Prisma models.

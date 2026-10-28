@@ -1,0 +1,4 @@
+- Server-side code lives in `server_actions` and `shared_lib` and imports the Prisma client and env helpers exclusively from `shared_lib` rather than instantiating them per module.
+- Route handlers in `app_routes` delegate business logic to server actions instead of calling Prisma directly.
+- UI in `ui_components` is built with Tailwind CSS classes and Lucide icons, consuming the shared primitives rather than defining its own base styles.
+- Authentication boundaries are enforced centrally through the NextAuth middleware matcher on `/account/:path*` instead of per-route checks.

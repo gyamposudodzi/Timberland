@@ -1,0 +1,6 @@
+- Every model uses `String @id @default(cuid())` as its primary key, keeping IDs opaque and globally unique across services.
+- Timestamps are standardized with `createdAt DateTime @default(now())` and `updatedAt DateTime @updatedAt` on every persistent entity.
+- Monotonic business states are modeled as Prisma enums (`Role`, `ShipmentStatus`, `PaymentMethod`, `NotificationChannel`, `NotificationLogStatus`) rather than free-form strings.
+- Foreign keys use explicit `onDelete` semantics: child records cascade (`Cascade`) while parent references that must not be silently orphaned use `RESTRICT`, and optional parent links use `SetNull`.
+- Frequently filtered columns carry explicit `@@index` declarations (e.g. `userId`, `status`, `createdAt`, `shipmentId`, `postalCode`) mirroring the indexes declared in the generated migration SQL.
+- Seed data is written as an idempotent script that truncates tables in reverse dependency order before recreating reference data.
