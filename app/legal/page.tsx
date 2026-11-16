@@ -10,7 +10,7 @@ export default function LegalPage() {
         <section>
           <h2 className="text-lg font-semibold text-foreground">Terms of service</h2>
           <p className="mt-2">
-            Timberland provides courier and delivery services using our own fleet. By booking a shipment you agree to provide
+            Sky Bridge Logistics provides courier and delivery services using our own fleet. By booking a shipment you agree to provide
             accurate address and contents information and to pay the quoted amount on delivery. Valuable and restricted items are
             subject to our declared-value limits and prohibited-items list.
           </p>

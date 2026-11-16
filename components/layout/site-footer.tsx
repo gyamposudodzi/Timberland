@@ -1,12 +1,13 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export function SiteFooter() {
   return (
     <footer className="mt-24 border-t border-border bg-card">
       <div className="container-page grid gap-8 py-12 sm:grid-cols-2 md:grid-cols-4">
         <div>
-          <p className="font-semibold">Timberland</p>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <Image src="/logo.jpg" alt="Sky Bridge Logistics" width={240} height={180} className="h-12 w-auto" />
+          <p className="mt-3 text-sm text-muted-foreground">
             Own-fleet courier and delivery. Reliable pickup, transparent pricing, and live tracking for every parcel.
           </p>
         </div>
@@ -36,7 +37,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-border">
         <div className="container-page py-6 text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Timberland Logistics. All rights reserved.
+          © {new Date().getFullYear()} Sky Bridge Logistics. All rights reserved.
         </div>
       </div>
     </footer>

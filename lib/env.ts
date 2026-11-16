@@ -41,7 +41,7 @@ export const env = {
       port: Number(optionalStr("SMTP_PORT") ?? 587),
       user: optionalStr("SMTP_USER"),
       password: optionalStr("SMTP_PASSWORD"),
-      from: optionalStr("EMAIL_FROM") ?? "Timberland <no-reply@timberland.example>",
+      from: optionalStr("EMAIL_FROM") ?? "Sky Bridge Logistics <no-reply@timberland.example>",
     };
   },
 

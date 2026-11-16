@@ -171,7 +171,7 @@ async function main() {
     },
   });
 
-  console.log("Seeded Timberland demo data.");
+  console.log("Seeded Sky Bridge demo data.");
   console.log("  Login:    demo@timberland.example  /  demo1234");
   console.log("  Admin:    admin@timberland.example /  admin1234");
   console.log(`  Track A (delivered):        ${tnA}`);

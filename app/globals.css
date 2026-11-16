@@ -1,68 +1,68 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ *
- * Timberland design tokens
- * Light-first palette with a forest-green primary and amber accent.
+ * Sky Bridge design tokens
+ * Light-first palette with a royal-blue primary and a gold accent.
  * ------------------------------------------------------------------ */
 
 :root {
-  --background: #f7f8f6;
-  --foreground: #14201a;
+  --background: #f5f8fc;
+  --foreground: #0f1e33;
 
   --card: #ffffff;
-  --card-foreground: #14201a;
+  --card-foreground: #0f1e33;
 
-  --primary: #1f6f4a;
+  --primary: #1668c7;
   --primary-foreground: #ffffff;
 
-  --secondary: #eef1ec;
-  --secondary-foreground: #1f2a24;
+  --secondary: #e8eff8;
+  --secondary-foreground: #16283f;
 
-  --muted: #eceee9;
-  --muted-foreground: #5b6660;
+  --muted: #eaeff5;
+  --muted-foreground: #5a6b7f;
 
-  --accent: #c88a2e;
+  --accent: #d99a2b;
   --accent-foreground: #1a1206;
 
   --destructive: #b4232a;
   --destructive-foreground: #ffffff;
 
-  --success: #1f6f4a;
+  --success: #1a7f4b;
   --warning: #b7791f;
 
-  --border: #dfe3dc;
-  --input: #dfe3dc;
-  --ring: #2f8b60;
+  --border: #d7e0ea;
+  --input: #d7e0ea;
+  --ring: #2f86e8;
 }
 
 .dark {
-  --background: #0d1512;
-  --foreground: #e8ede9;
+  --background: #0a1220;
+  --foreground: #e6edf5;
 
-  --card: #131e19;
-  --card-foreground: #e8ede9;
+  --card: #0f1a2b;
+  --card-foreground: #e6edf5;
 
-  --primary: #35a374;
-  --primary-foreground: #04140c;
+  --primary: #4c9df0;
+  --primary-foreground: #04101f;
 
-  --secondary: #1b2620;
-  --secondary-foreground: #e8ede9;
+  --secondary: #16243a;
+  --secondary-foreground: #e6edf5;
 
-  --muted: #1b2620;
-  --muted-foreground: #9aa8a0;
+  --muted: #16243a;
+  --muted-foreground: #93a4b8;
 
-  --accent: #d6a24a;
+  --accent: #e0ac4a;
   --accent-foreground: #1a1206;
 
   --destructive: #e5544f;
   --destructive-foreground: #1a0505;
 
-  --success: #35a374;
+  --success: #34a06a;
   --warning: #d6a24a;
 
-  --border: #26332c;
-  --input: #26332c;
-  --ring: #35a374;
+  --border: #22334a;
+  --input: #22334a;
+  --ring: #4c9df0;
 }
 
 @theme inline {

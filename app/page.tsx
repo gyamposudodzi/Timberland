@@ -46,7 +46,7 @@ export default async function HomePage() {
             <Card className="w-full">
               <CardHeader>
                 <CardTitle>Track a shipment</CardTitle>
-                <CardDescription>Enter your Timberland tracking number to see live status.</CardDescription>
+                <CardDescription>Enter your Sky Bridge tracking number to see live status.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <TrackForm />

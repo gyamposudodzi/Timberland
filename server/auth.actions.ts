@@ -77,7 +77,7 @@ export async function signupAction(
     const link = `${env.appUrl}/verify?token=${verifyToken}`;
     await sendBasicEmail(
       user.email,
-      "Confirm your Timberland account",
+      "Confirm your Sky Bridge account",
       `<p>Welcome, ${name || "there"}!</p><p>Please confirm your email: <a href="${link}">${link}</a></p>`,
     );
   }
@@ -134,7 +134,7 @@ export async function requestPasswordResetAction(
     if (env.emailEnabled) {
       await sendBasicEmail(
         user.email,
-        "Reset your Timberland password",
+        "Reset your Sky Bridge password",
         `<p>Use this link to reset your password. It expires in 1 hour:</p><p><a href="${link}">${link}</a></p><p>If you didn't request this, you can ignore this email.</p>`,
       );
     } else {

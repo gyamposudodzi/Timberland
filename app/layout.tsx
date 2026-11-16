@@ -9,12 +9,15 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export const metadata: Metadata = {
   title: {
-    default: "Timberland — Courier & Delivery",
-    template: "%s · Timberland",
+    default: "Sky Bridge Logistics — Courier & Delivery",
+    template: "%s · Sky Bridge",
   },
   description:
     "Own-fleet courier and delivery with transparent pricing and live tracking. Track any shipment as a guest, or create an account to manage deliveries.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  icons: {
+    icon: "/logo.jpg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

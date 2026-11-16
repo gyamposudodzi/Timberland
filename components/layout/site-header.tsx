@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Bell, Package } from "lucide-react";
+import Image from "next/image";
+import { Bell } from "lucide-react";
 import { auth, signOut } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/layout/user-menu";
@@ -17,11 +18,15 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
       <div className="container-page flex h-16 items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <span className="grid h-9 w-9 place-items-center rounded-md bg-primary text-primary-foreground">
-            <Package className="h-5 w-5" />
-          </span>
-          <span className="text-lg tracking-tight">Timberland</span>
+        <Link href="/" className="flex items-center" aria-label="Sky Bridge Logistics — home">
+          <Image
+            src="/logo.jpg"
+            alt="Sky Bridge Logistics"
+            width={400}
+            height={300}
+            priority
+            className="h-11 w-auto"
+          />
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export const metadata: Metadata = {
   title: "Track a shipment",
-  description: "Track any Timberland shipment by tracking number — no account required.",
+  description: "Track any Sky Bridge shipment by tracking number — no account required.",
 };
 
 export default function TrackPage() {

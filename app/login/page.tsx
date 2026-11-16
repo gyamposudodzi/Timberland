@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/login-form";
 
@@ -22,6 +23,9 @@ export default async function LoginPage({
   return (
     <div className="container-page flex justify-center py-16">
       <div className="w-full max-w-md">
+        <div className="mb-6 flex justify-center">
+          <Image src="/logo.jpg" alt="Sky Bridge Logistics" width={280} height={210} className="h-16 w-auto" priority />
+        </div>
         <Card>
           <CardHeader>
             <CardTitle>Welcome back</CardTitle>
@@ -35,7 +39,7 @@ export default async function LoginPage({
               </Link>
             </p>
             <p className="text-center text-sm text-muted-foreground">
-              New to Timberland?{" "}
+              New to Sky Bridge?{" "}
               <Link href="/signup" className="font-medium text-primary hover:underline">
                 Create an account
               </Link>

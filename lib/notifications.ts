@@ -33,7 +33,7 @@ function statusEmailHtml(shipment: Shipment, event: TrackingEvent): string {
   const meta = STATUS_META[event.statusCode as ShipmentStatus];
   return `
     <div style="font-family:sans-serif;max-width:520px">
-      <h2 style="color:#1f6f4a;margin-bottom:4px">Timberland delivery update</h2>
+      <h2 style="color:#1668c7;margin-bottom:4px">Sky Bridge delivery update</h2>
       <p style="color:#5b6660;margin-top:0">Tracking number <strong>${shipment.trackingNumber}</strong></p>
       <p style="font-size:18px"><strong>${meta.label}</strong>${event.location ? ` — ${event.location}` : ""}</p>
       ${event.note ? `<p>${event.note}</p>` : ""}
