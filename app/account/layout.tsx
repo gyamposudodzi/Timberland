@@ -1,37 +1,36 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LayoutDashboard, PlusCircle, MapPin, Bell } from "lucide-react";
-import { auth } from "@/lib/auth";
-
-const LINKS = [
-  { href: "/account", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/account/new-shipment", label: "New shipment", icon: PlusCircle },
-  { href: "/account/addresses", label: "Addresses", icon: MapPin },
-  { href: "/account/notifications", label: "Notifications", icon: Bell },
-];
+import { auth, signOut } from "@/lib/auth";
+import { getMyShipmentSummary } from "@/server/account.service";
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { AppTopbar } from "@/components/layout/app-topbar";
 
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user?.id) redirect("/login");
+
+  const summary = await getMyShipmentSummary(session.user.id);
+  const workspaceName = session.user.name?.trim() || session.user.email || "Personal Workspace";
 
   return (
-    <div className="container-page py-10">
-      <div className="grid gap-8 md:grid-cols-[220px_1fr]">
-        <aside>
-          <nav className="flex flex-col gap-1">
-            {LINKS.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <l.icon className="h-4 w-4" />
-                {l.label}
-              </Link>
-            ))}
-          </nav>
-        </aside>
-        <div className="min-w-0">{children}</div>
+    <div className="flex min-h-screen bg-muted/50">
+      <AppSidebar
+        workspaceName={workspaceName}
+        activeCount={summary.active}
+        isAdmin={session.user.role === "ADMIN"}
+      />
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <AppTopbar
+          userName={session.user.name ?? ""}
+          userEmail={session.user.email ?? null}
+          userRole={session.user.role ?? null}
+          userId={session.user.id}
+          signOutAction={async () => {
+            "use server";
+            await signOut({ redirectTo: "/" });
+          }}
+        />
+        <main className="flex-1 p-6 md:p-8">{children}</main>
       </div>
     </div>
   );

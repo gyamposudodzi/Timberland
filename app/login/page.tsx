@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { LoginForm } from "@/components/auth/login-form";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -21,38 +20,32 @@ export default async function LoginPage({
   const authError = sp.error ? AUTH_ERRORS[sp.error] ?? AUTH_ERRORS.default : undefined;
 
   return (
-    <div className="container-page flex justify-center py-16">
-      <div className="w-full max-w-md">
-        <div className="mb-6 flex justify-center">
-          <Image src="/logo.jpg" alt="Sky Bridge Logistics" width={280} height={210} className="h-16 w-auto" priority />
+    <AuthShell
+      topPrompt="New to Parcel?"
+      topLinkLabel="Create an account"
+      topLinkHref="/signup"
+    >
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-forest">Welcome back.</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            Sign in to your Parcel account and keep things moving.
+          </p>
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Welcome back</CardTitle>
-            <CardDescription>Sign in to manage your shipments and alerts.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <LoginForm authError={authError} />
-            <p className="text-right text-sm">
-              <Link href="/forgot-password" className="text-muted-foreground hover:text-foreground hover:underline">
-                Forgot password?
-              </Link>
-            </p>
-            <p className="text-center text-sm text-muted-foreground">
-              New to Sky Bridge?{" "}
-              <Link href="/signup" className="font-medium text-primary hover:underline">
-                Create an account
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          Just tracking a parcel?{" "}
-          <Link href="/track" className="text-primary hover:underline">
-            Track without an account
+
+        <LoginForm authError={authError} />
+
+        <p className="text-xs text-muted-foreground">
+          Don&apos;t have an account?{" "}
+          <Link href="/signup" className="font-semibold text-forest hover:underline">
+            Create one for free
           </Link>
         </p>
+
+        <div className="rounded-xl border border-border bg-muted/70 px-4 py-3 text-xs text-muted-foreground">
+          Your shipments. Your details. Safely in one place.
+        </div>
       </div>
-    </div>
+    </AuthShell>
   );
 }

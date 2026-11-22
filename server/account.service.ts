@@ -46,6 +46,7 @@ export async function listMyShipments(userId: string, { q, status, page = 1, pag
         createdAt: true,
         pickupDate: true,
         serviceLevel: { select: { name: true, code: true } },
+        senderAddress: { select: { city: true, country: true } },
         recipientAddress: { select: { city: true, country: true } },
       },
     }),

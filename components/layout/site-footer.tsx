@@ -1,43 +1,56 @@
 import Link from "next/link";
-import Image from "next/image";
+import { ParcelLogo } from "@/components/brand/parcel-logo";
 
 export function SiteFooter() {
   return (
-    <footer className="mt-24 border-t border-border bg-card">
-      <div className="container-page grid gap-8 py-12 sm:grid-cols-2 md:grid-cols-4">
-        <div>
-          <Image src="/logo.jpg" alt="Sky Bridge Logistics" width={240} height={180} className="h-12 w-auto" />
-          <p className="mt-3 text-sm text-muted-foreground">
-            Own-fleet courier and delivery. Reliable pickup, transparent pricing, and live tracking for every parcel.
-          </p>
+    <footer className="bg-forest text-white">
+      <div className="container-page py-14">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-3">
+            <ParcelLogo variant="dark" />
+            <p className="text-sm text-[#9DAFA1]">Moving the things that move you.</p>
+            <p className="text-xs text-[#73807B]">Parcels. Freight. Possibilities.</p>
+          </div>
+
+          <div className="space-y-2.5 text-sm">
+            <p className="font-semibold text-white">Ship with Parcel</p>
+            <ul className="space-y-2 text-[#9DAFA1]">
+              <li><Link href="/pricing" className="hover:text-lime transition-colors">Parcel &amp; express</Link></li>
+              <li><Link href="/pricing#freight" className="hover:text-lime transition-colors">Freight solutions</Link></li>
+              <li><Link href="/track" className="hover:text-lime transition-colors">Track a shipment</Link></li>
+              <li><Link href="/quote" className="hover:text-lime transition-colors">Get a quote</Link></li>
+            </ul>
+          </div>
+
+          <div className="space-y-2.5 text-sm">
+            <p className="font-semibold text-white">Your account</p>
+            <ul className="space-y-2 text-[#9DAFA1]">
+              <li><Link href="/login" className="hover:text-lime transition-colors">Sign in</Link></li>
+              <li><Link href="/signup" className="hover:text-lime transition-colors">Create account</Link></li>
+              <li><Link href="/account/shipments" className="hover:text-lime transition-colors">My shipments</Link></li>
+              <li><Link href="/account/billing" className="hover:text-lime transition-colors">Billing &amp; invoices</Link></li>
+            </ul>
+          </div>
+
+          <div className="space-y-2.5 text-sm">
+            <p className="font-semibold text-white">Here to help</p>
+            <ul className="space-y-2 text-[#9DAFA1]">
+              <li><Link href="/help" className="hover:text-lime transition-colors">Help center</Link></li>
+              <li><Link href="/help#contact" className="hover:text-lime transition-colors">Contact support</Link></li>
+              <li><Link href="/terms" className="hover:text-lime transition-colors">Terms &amp; conditions</Link></li>
+              <li><Link href="/privacy" className="hover:text-lime transition-colors">Privacy policy</Link></li>
+            </ul>
+          </div>
         </div>
-        <div>
-          <p className="text-sm font-semibold">Services</p>
-          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li><Link href="/pricing" className="hover:text-foreground">Standard delivery</Link></li>
-            <li><Link href="/pricing" className="hover:text-foreground">Express &amp; same-day</Link></li>
-            <li><Link href="/quote" className="hover:text-foreground">Get a quote</Link></li>
-          </ul>
-        </div>
-        <div>
-          <p className="text-sm font-semibold">Support</p>
-          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li><Link href="/track" className="hover:text-foreground">Track a shipment</Link></li>
-            <li><Link href="/help" className="hover:text-foreground">Help center</Link></li>
-            <li><Link href="/login" className="hover:text-foreground">Sign in</Link></li>
-          </ul>
-        </div>
-        <div>
-          <p className="text-sm font-semibold">Legal</p>
-          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li><Link href="/legal" className="hover:text-foreground">Terms</Link></li>
-            <li><Link href="/legal" className="hover:text-foreground">Privacy</Link></li>
-          </ul>
-        </div>
-      </div>
-      <div className="border-t border-border">
-        <div className="container-page py-6 text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Sky Bridge Logistics. All rights reserved.
+
+        <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-white/10 pt-6 text-xs text-[#73807B] sm:flex-row sm:items-center">
+          <p>&copy; {new Date().getFullYear()} Parcel Logistics. All rights reserved.</p>
+          <div className="flex items-center gap-4">
+            <span>United States · English</span>
+            <Link href="/privacy#cookies" className="hover:text-white transition-colors">
+              Cookie preferences
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

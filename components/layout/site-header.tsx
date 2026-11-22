@@ -1,14 +1,15 @@
 import Link from "next/link";
-import Image from "next/image";
-import { Bell } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { auth, signOut } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { ParcelLogo } from "@/components/brand/parcel-logo";
 import { UserMenu } from "@/components/layout/user-menu";
 
 const NAV = [
-  { href: "/track", label: "Track" },
-  { href: "/quote", label: "Get a quote" },
-  { href: "/pricing", label: "Pricing" },
+  { href: "/pricing", label: "Shipping services" },
+  { href: "/track", label: "Track a shipment" },
+  { href: "/quote", label: "For business" },
+  { href: "/help", label: "Help center" },
 ];
 
 export async function SiteHeader() {
@@ -16,40 +17,29 @@ export async function SiteHeader() {
   const user = session?.user;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
-      <div className="container-page flex h-16 items-center justify-between gap-4">
-        <Link href="/" className="flex items-center" aria-label="Sky Bridge Logistics — home">
-          <Image
-            src="/logo.jpg"
-            alt="Sky Bridge Logistics"
-            width={400}
-            height={300}
-            priority
-            className="h-11 w-auto"
-          />
-        </Link>
+    <header className="sticky top-0 z-40 border-b border-border bg-white/95 backdrop-blur">
+      <div className="container-page flex h-18 items-center justify-between gap-6">
+        <ParcelLogo variant="light" />
 
         <nav className="hidden items-center gap-1 md:flex">
           {NAV.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="rounded-lg px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-forest"
             >
               {item.label}
             </Link>
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           {user ? (
             <>
-              <Link
-                href="/account/notifications"
-                aria-label="Notifications"
-                className="grid h-9 w-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <Bell className="h-5 w-5" />
+              <Link href="/account">
+                <Button variant="lime" size="sm">
+                  Workspace <ArrowUpRight className="h-3.5 w-3.5" />
+                </Button>
               </Link>
               <UserMenu
                 name={user.name ?? ""}
@@ -65,12 +55,14 @@ export async function SiteHeader() {
           ) : (
             <>
               <Link href="/login">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="font-medium text-forest">
                   Sign in
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button size="sm">Create account</Button>
+                <Button variant="lime" size="sm" className="px-4">
+                  Create account <ArrowUpRight className="h-3.5 w-3.5" />
+                </Button>
               </Link>
             </>
           )}

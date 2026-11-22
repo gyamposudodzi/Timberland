@@ -4,10 +4,16 @@ import { listServiceLevels } from "@/lib/rating";
 import { getSavedAddresses } from "@/server/account.service";
 import { NewShipmentForm } from "@/components/shipment/new-shipment-form";
 
-export const metadata = { title: "New shipment" };
+export const metadata = { title: "Create shipment" };
 
-export default async function NewShipmentPage() {
+export default async function NewShipmentPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ to?: string }>;
+}) {
   const session = await auth();
+  const sp = await searchParams;
+
   const [services, saved, user] = await Promise.all([
     listServiceLevels(),
     session?.user?.id ? getSavedAddresses(session.user.id) : Promise.resolve([]),
@@ -27,7 +33,6 @@ export default async function NewShipmentPage() {
     country: a.country,
   }));
 
-  // Most recent saved address (or account details) seeds the sender.
   const latest = saved[0];
   const defaultSender = latest
     ? {
@@ -53,15 +58,22 @@ export default async function NewShipmentPage() {
         }
       : null;
 
+  const preselectedRecipient = sp.to ? savedAddresses.find((a) => a.id === sp.to) ?? null : null;
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">New shipment</h1>
-        <p className="text-sm text-muted-foreground">Prices are confirmed before pickup. Payment on delivery.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-forest sm:text-3xl">
+          Create a shipment
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          A few details, and you&apos;re on your way.
+        </p>
       </div>
       <NewShipmentForm
         services={services.map((s) => ({ code: s.code, name: s.name, slaDays: s.slaDays }))}
         defaultSender={defaultSender}
+        defaultRecipient={preselectedRecipient}
         savedAddresses={savedAddresses}
       />
     </div>
