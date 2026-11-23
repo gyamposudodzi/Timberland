@@ -127,7 +127,7 @@ export function AppSidebar({ activeCount = 0, isAdmin = false }: AppSidebarProps
         </div>
 
         <p className="px-2 text-[11px] text-[#73807B]">
-          &copy; {new Date().getFullYear()} Parcel Logistics
+          &copy; {new Date().getFullYear()} Skynet Freight
         </p>
       </div>
     </aside>

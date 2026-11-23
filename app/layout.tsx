@@ -10,11 +10,11 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export const metadata: Metadata = {
   title: {
-    default: "Parcel — Courier & Freight Logistics",
-    template: "%s · Parcel",
+    default: "Skynet Freight — Courier & Logistics",
+    template: "%s · Skynet Freight",
   },
   description:
-    "Express parcels, reliable freight, and a simpler way to ship. Track any shipment as a guest, or create an account to manage deliveries.",
+    "Express parcels, reliable freight, and global logistics solutions with Skynet Freight. Track any shipment as a guest, or create an account to manage deliveries.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
 };
 

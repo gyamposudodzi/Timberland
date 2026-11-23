@@ -78,7 +78,7 @@ export function AuthShell({
 
       {/* Bottom minimal bar */}
       <footer className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-3 px-6 py-6 text-xs text-muted-foreground sm:flex-row sm:items-center">
-        <p>&copy; {new Date().getFullYear()} Parcel Logistics</p>
+        <p>&copy; {new Date().getFullYear()} Skynet Freight</p>
         <div className="flex items-center gap-5">
           <Link href="/terms" className="hover:text-forest transition-colors">
             Terms &amp; conditions

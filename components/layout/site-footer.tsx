@@ -44,7 +44,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-white/10 pt-6 text-xs text-[#73807B] sm:flex-row sm:items-center">
-          <p>&copy; {new Date().getFullYear()} Parcel Logistics. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Skynet Freight. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <span>United States · English</span>
             <Link href="/privacy#cookies" className="hover:text-white transition-colors">

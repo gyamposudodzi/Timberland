@@ -86,7 +86,7 @@ export default function HomePage() {
           <div className="relative overflow-hidden rounded-2xl border border-border bg-muted shadow-sm">
             <Image
               src="/images/hero-van.jpg"
-              alt="Parcel Logistics courier and delivery van"
+              alt="Skynet Freight courier and delivery van"
               width={900}
               height={680}
               priority
