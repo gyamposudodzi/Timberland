@@ -43,6 +43,7 @@ jobs:
     needs: quality
     env:
       DATABASE_URL: postgresql://timberland:timberland@localhost:5432/timberland?schema=public
+      DIRECT_URL: postgresql://timberland:timberland@localhost:5432/timberland?schema=public
       AUTH_SECRET: ci-only-secret-please-replace-000000
       AUTH_TRUST_HOST: "true"
       NEXT_PUBLIC_APP_URL: http://localhost:3000
