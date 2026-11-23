@@ -100,6 +100,7 @@ export default async function ShipmentDetailPage({
             </CardHeader>
             <CardContent>
               <TrackingTimeline
+                currentStatus={shipment.status as ShipmentStatus}
                 events={shipment.trackingEvents.map((e) => {
                   const m = STATUS_META[e.statusCode as ShipmentStatus];
                   return {

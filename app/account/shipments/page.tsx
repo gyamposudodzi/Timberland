@@ -6,6 +6,7 @@ import { listMyShipments, getMyShipmentSummary } from "@/server/account.service"
 import type { ShipmentStatus } from "@/lib/shipment-status";
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import { StatusPill } from "@/components/tracking/status-pill";
+import { ExportCsvButton } from "@/components/account/export-csv-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -128,12 +129,26 @@ export default async function MyShipmentsPage({
                 name="q"
                 defaultValue={q}
                 placeholder="Search tracking ID"
+                aria-label="Search tracking number"
                 className="h-9 pl-8 text-xs font-mono"
               />
             </div>
             <Button type="submit" variant="outline" size="sm">
               Search
             </Button>
+            <ExportCsvButton
+              filename="parcel-shipments.csv"
+              headers={["Tracking ID", "Destination", "Service", "Status", "Price", "Currency", "Created"]}
+              rows={result.shipments.map((s) => [
+                s.trackingNumber,
+                `${s.recipientAddress.city}, ${s.recipientAddress.country}`,
+                s.serviceLevel.name,
+                s.status,
+                Number(s.price).toFixed(2),
+                s.currency,
+                s.createdAt.toISOString(),
+              ])}
+            />
           </form>
         </div>
 

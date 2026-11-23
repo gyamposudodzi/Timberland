@@ -84,3 +84,37 @@ export async function deleteAddressAction(formData: FormData): Promise<ActionRes
   revalidatePath("/account");
   return { ok: true };
 }
+
+/** Update the signed-in user's basic profile (name and phone). */
+export async function updateProfileAction(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user?.id) return { ok: false, error: "Please sign in to update your profile." };
+
+  const firstName = String(formData.get("firstName") ?? "").trim();
+  const lastName = String(formData.get("lastName") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
+
+  const fullName = `${firstName} ${lastName}`.trim();
+  if (!fullName) {
+    return {
+      ok: false,
+      error: "Please enter your name.",
+      fieldErrors: { firstName: "Name is required" },
+    };
+  }
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: {
+      name: fullName,
+      phone: phone || null,
+    },
+  });
+
+  revalidatePath("/account/settings");
+  revalidatePath("/account");
+  return { ok: true };
+}

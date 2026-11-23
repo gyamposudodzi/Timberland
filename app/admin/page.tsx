@@ -49,18 +49,18 @@ export default async function AdminQueuePage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Shipment queue</h1>
-        <p className="text-sm text-muted-foreground">All shipments across customers, most recently updated first.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-forest sm:text-3xl">Shipment queue</h1>
+        <p className="mt-1 text-sm text-muted-foreground">All shipments across customers, most recently updated first.</p>
       </div>
 
       {/* At-a-glance summary — quick filters. */}
       <div className="grid gap-4 sm:grid-cols-4">
         {SUMMARY_CARDS.map((c) => (
           <Link key={c.key} href={c.href}>
-            <Card className="transition-colors hover:border-primary/40 hover:bg-muted/40">
+            <Card className="rounded-2xl transition-colors hover:border-ring/50">
               <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground">{c.label}</p>
-                <p className="text-3xl font-bold">{counts[c.key]}</p>
+                <p className="text-xs font-medium text-muted-foreground">{c.label}</p>
+                <p className="mt-1 text-3xl font-bold text-forest tabular-nums">{counts[c.key]}</p>
               </CardContent>
             </Card>
           </Link>

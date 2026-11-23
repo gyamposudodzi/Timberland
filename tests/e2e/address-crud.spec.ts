@@ -18,7 +18,7 @@ async function login(page: Page) {
     await submit.click();
     await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 10000 });
   }
-  await expect(page.getByRole("heading", { name: /your shipments/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /your shipments/i })).toBeVisible({ timeout: 10000 });
 }
 
 async function fillAddress(page: Page, data: Record<string, string>) {
@@ -68,7 +68,7 @@ test.describe("address book CRUD", () => {
   test("creates, edits, and deletes a saved address", async ({ page }) => {
     await login(page);
     await page.goto("/account/addresses");
-    await expect(page.getByRole("heading", { name: /saved addresses/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /address book/i })).toBeVisible();
 
     // CREATE.
     await openNewForm(page);

@@ -131,3 +131,8 @@ body {
     padding-inline: 1.5rem;
   }
 }
+
+/* Soften OpenStreetMap tiles to match the Parcel sage-green palette */
+.leaflet-tile-pane {
+  filter: grayscale(40%) saturate(75%) brightness(104%) contrast(92%);
+}

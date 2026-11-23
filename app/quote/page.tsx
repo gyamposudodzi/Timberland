@@ -4,6 +4,8 @@ import { ArrowUpRight } from "lucide-react";
 import { QuoteCalculator } from "@/components/quote/quote-calculator";
 import { listServiceLevels } from "@/lib/rating";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Get a quote",
   description: "Estimate your delivery price with transparent zone-based pricing.",

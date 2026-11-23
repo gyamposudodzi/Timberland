@@ -6,7 +6,7 @@ import { normalizeTrackingNumber } from "@/lib/tracking-number";
 export interface PublicTrackingEvent {
   statusCode: ShipmentStatus;
   label: string;
-  description: string;
+  description: string | null;
   location: string | null;
   occurredAt: Date;
 }
@@ -105,7 +105,7 @@ export async function getTrackedShipment(
     return {
       statusCode: e.statusCode as ShipmentStatus,
       label: m.label,
-      description: e.note ?? m.description,
+      description: e.note,
       location: e.location,
       occurredAt: e.occurredAt,
     };

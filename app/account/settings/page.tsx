@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, CheckCircle2, Shield } from "lucide-react";
+import { ArrowRight, Shield } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { ProfileForm } from "@/components/account/profile-form";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Field } from "@/components/ui/field";
 
 export const metadata = { title: "Account settings" };
 
@@ -15,7 +14,7 @@ export default async function AccountSettingsPage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { name: true, email: true, phone: true, emailVerified: true, role: true },
+    select: { name: true, email: true, phone: true, emailVerified: true },
   });
   if (!user) notFound();
 
@@ -53,33 +52,17 @@ export default async function AccountSettingsPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-12">
-        {/* Left main column */}
-        <div className="space-y-6 lg:col-span-8">
-          <div className="rounded-2xl border border-border bg-white p-6 space-y-5">
-            <h2 className="text-base font-bold text-forest">Personal information</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="First name" htmlFor="firstName">
-                <Input id="firstName" defaultValue={firstName} readOnly />
-              </Field>
-              <Field label="Last name" htmlFor="lastName">
-                <Input id="lastName" defaultValue={lastName} readOnly />
-              </Field>
-              <Field label="Email address" htmlFor="email">
-                <Input id="email" defaultValue={user.email} readOnly />
-              </Field>
-              <Field label="Phone number" htmlFor="phone">
-                <Input id="phone" defaultValue={user.phone ?? ""} placeholder="Not set" readOnly />
-              </Field>
-            </div>
-            {user.emailVerified && (
-              <p className="inline-flex items-center gap-1.5 text-xs font-medium text-success">
-                <CheckCircle2 className="h-3.5 w-3.5" /> Email verified
-              </p>
-            )}
-          </div>
+        <div className="rounded-2xl border border-border bg-white p-6 space-y-5 lg:col-span-8">
+          <h2 className="text-base font-bold text-forest">Personal information</h2>
+          <ProfileForm
+            firstName={firstName}
+            lastName={lastName}
+            email={user.email}
+            phone={user.phone ?? ""}
+            emailVerified={user.emailVerified}
+          />
         </div>
 
-        {/* Right column */}
         <div className="space-y-6 lg:col-span-4">
           <div className="rounded-2xl border border-border bg-white p-6 space-y-4">
             <div className="flex items-center gap-2">

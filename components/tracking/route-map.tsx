@@ -130,9 +130,9 @@ export function RouteMap({
       instance = map;
       mapRef.current = map;
 
-      // Clean minimal CartoDB Positron basemap matching Parcel sage aesthetic
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-        maxZoom: 18,
+      // OpenStreetMap tiles (free, no API key required)
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
       }).addTo(map);
 
       // Curved arc midpoint for nicer route visualization

@@ -18,7 +18,7 @@ test.describe("registered customer shipment flow", () => {
     await login(page);
 
     await page.goto("/account/new-shipment");
-    await expect(page.getByRole("heading", { name: /new shipment/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /create a shipment/i })).toBeVisible();
 
     // Recipient (sender is pre-filled from a saved address).
     await page.locator("#recipient-contactName").fill("Newton Test");
@@ -30,10 +30,13 @@ test.describe("registered customer shipment flow", () => {
     // Parcel contents (weight/pieces default to 1).
     await page.locator("#p-0-desc").fill("E2e test package");
 
-    await page.getByRole("button", { name: /create shipment/i }).click();
+    // Step 1 -> Step 2 -> Step 3 -> Confirm
+    await page.getByRole("button", { name: /continue to service/i }).click();
+    await page.getByRole("button", { name: "Review & pay", exact: true }).click();
+    await page.getByRole("button", { name: /confirm & book shipment/i }).click();
 
     // Redirected to the new shipment's detail page.
-    await expect(page).toHaveURL(/\/account\/shipments\/.+/);
+    await expect(page).toHaveURL(/\/account\/shipments\/.+/, { timeout: 15000 });
     const tracking = page.locator("main").getByText(/^TB[0-9A-Z]{8,}$/).first();
     await expect(tracking).toBeVisible();
     const code = (await tracking.textContent())?.trim() ?? "";
@@ -86,7 +89,10 @@ test.describe("registered customer shipment flow", () => {
     await page.locator("#saveRecipient").check();
     await page.locator("#recipientLabel").fill(LABEL);
 
-    await page.getByRole("button", { name: /create shipment/i }).click();
+    // Step 1 -> Step 2 -> Step 3 -> Confirm
+    await page.getByRole("button", { name: /continue to service/i }).click();
+    await page.getByRole("button", { name: "Review & pay", exact: true }).click();
+    await page.getByRole("button", { name: /confirm & book shipment/i }).click();
     await expect(page).toHaveURL(/\/account\/shipments\/.+/, { timeout: 15000 });
 
     // The address is now in the saved-address book. Scope to the unique labeled

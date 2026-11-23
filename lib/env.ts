@@ -27,7 +27,11 @@ export const env = {
     return str("AUTH_SECRET");
   },
   get appUrl(): string {
-    return str("NEXT_PUBLIC_APP_URL", "http://localhost:3000");
+    const explicit = optionalStr("NEXT_PUBLIC_APP_URL");
+    if (explicit) return explicit;
+    const vercelUrl = optionalStr("VERCEL_URL");
+    if (vercelUrl) return `https://${vercelUrl}`;
+    return "http://localhost:3000";
   },
   get defaultCurrency(): string {
     return str("NEXT_PUBLIC_DEFAULT_CURRENCY", "USD");

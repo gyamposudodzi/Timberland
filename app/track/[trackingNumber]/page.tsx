@@ -176,6 +176,7 @@ export default async function TrackDetailPage({
             <h3 className="text-lg font-bold text-forest">Every step of the journey</h3>
             <div className="mt-6">
               <TrackingTimeline
+                currentStatus={d.status}
                 events={d.events.map((e) => ({
                   statusCode: e.statusCode,
                   label: e.label,

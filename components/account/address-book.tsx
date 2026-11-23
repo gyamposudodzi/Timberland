@@ -3,9 +3,10 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Plus, Search, Trash2 } from "lucide-react";
-import { deleteAddressAction } from "@/server/account.actions";
+import { ArrowRight, Plus, Search, Trash2, Upload } from "lucide-react";
+import { deleteAddressAction, saveAddressAction } from "@/server/account.actions";
 import { AddressForm, type AddressValues } from "@/components/account/address-form";
+import { ExportCsvButton } from "@/components/account/export-csv-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ export function AddressBook({ addresses }: { addresses: SavedAddress[] }) {
   const [mode, setMode] = useState<"idle" | "new" | "edit">("idle");
   const [editing, setEditing] = useState<SavedAddress | null>(null);
   const [query, setQuery] = useState("");
+  const [importNote, setImportNote] = useState<string | null>(null);
   const [pending, startDelete] = useTransition();
 
   const openNew = () => {
@@ -84,13 +86,30 @@ export function AddressBook({ addresses }: { addresses: SavedAddress[] }) {
           </span>
         </div>
 
-        <div className="relative w-full sm:w-64">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search name, label, or city"
-            className="h-9 pl-8 text-xs"
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative w-full sm:w-64">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search name, label, or city"
+              className="h-9 pl-8 text-xs"
+            />
+          </div>
+          <ExportCsvButton
+            filename="parcel-addresses.csv"
+            headers={["Label", "Contact", "Phone", "Line 1", "Line 2", "City", "Region", "Postal Code", "Country"]}
+            rows={addresses.map((a) => [
+              a.label ?? "",
+              a.contactName,
+              a.phone,
+              a.line1,
+              a.line2 ?? "",
+              a.city,
+              a.region ?? "",
+              a.postalCode,
+              a.country,
+            ])}
           />
         </div>
       </div>
@@ -175,6 +194,53 @@ export function AddressBook({ addresses }: { addresses: SavedAddress[] }) {
           ))}
         </div>
       )}
+
+      {/* CSV Import banner */}
+      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-border bg-secondary/70 px-6 py-5 sm:flex-row sm:items-center">
+        <div>
+          <p className="text-sm font-semibold text-forest">Already have a list? Bring your contacts with you.</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {importNote ?? "Upload a CSV with columns: label, contactName, phone, line1, city, postalCode, country."}
+          </p>
+        </div>
+        <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-white px-3.5 py-2 text-xs font-semibold text-forest hover:bg-muted">
+          <Upload className="h-3.5 w-3.5" /> Import address CSV
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const text = await file.text();
+              const lines = text.split(/\r?\n/).filter((l) => l.trim());
+              if (lines.length < 2) {
+                setImportNote("CSV needs a header row and at least one address row.");
+                return;
+              }
+              let imported = 0;
+              for (const line of lines.slice(1)) {
+                const cols = line.split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
+                const [label = "", contactName = "", phone = "", line1 = "", city = "", postalCode = "", country = "US"] = cols;
+                if (!contactName || !phone || !line1 || !city || !postalCode) continue;
+                const fd = new FormData();
+                fd.set("label", label);
+                fd.set("contactName", contactName);
+                fd.set("phone", phone);
+                fd.set("line1", line1);
+                fd.set("city", city);
+                fd.set("postalCode", postalCode);
+                fd.set("country", country || "US");
+                const res = await saveAddressAction(null, fd);
+                if (res.ok) imported++;
+              }
+              setImportNote(`Imported ${imported} address${imported === 1 ? "" : "es"}.`);
+              router.refresh();
+              e.target.value = "";
+            }}
+          />
+        </label>
+      </div>
     </div>
   );
 }

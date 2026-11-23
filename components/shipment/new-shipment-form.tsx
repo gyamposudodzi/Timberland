@@ -363,8 +363,9 @@ export function NewShipmentForm({
                 </div>
                 <AddressFields idPrefix="recipient" value={recipient} onChange={setRecipient} addresses={savedAddresses} />
                 <div className="mt-4 border-t border-border pt-4">
-                  <label className="inline-flex items-center gap-2 text-xs font-medium text-forest cursor-pointer">
+                  <label htmlFor="saveRecipient" className="inline-flex items-center gap-2 text-xs font-medium text-forest cursor-pointer">
                     <input
+                      id="saveRecipient"
                       type="checkbox"
                       checked={saveRecipient}
                       onChange={(e) => setSaveRecipient(e.target.checked)}

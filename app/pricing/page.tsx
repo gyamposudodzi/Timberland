@@ -7,6 +7,8 @@ import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Shipping services & pricing",
   description: "Transparent, zone-based delivery pricing.",

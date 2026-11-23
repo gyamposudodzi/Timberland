@@ -35,7 +35,7 @@ test.describe("guest tracking", () => {
     await page.goto("/");
     const input = page.getByLabel("Tracking number").first();
     await input.fill(seed.trackingNumber);
-    await page.getByRole("button", { name: /^track$/i }).first().click();
+    await page.getByRole("button", { name: /^track(\s+shipment)?$/i }).first().click();
     await expect(page).toHaveURL(new RegExp(`/track/${seed.trackingNumber}$`));
   });
 });
