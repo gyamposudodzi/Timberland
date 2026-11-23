@@ -13,18 +13,17 @@ import {
   Search,
   ShieldCheck,
   ArrowRight,
-  ChevronDown,
 } from "lucide-react";
 import { ParcelLogo } from "@/components/brand/parcel-logo";
 import { cn } from "@/lib/utils";
 
 interface AppSidebarProps {
-  workspaceName: string;
+  workspaceName?: string;
   activeCount?: number;
   isAdmin?: boolean;
 }
 
-export function AppSidebar({ workspaceName, activeCount = 0, isAdmin = false }: AppSidebarProps) {
+export function AppSidebar({ activeCount = 0, isAdmin = false }: AppSidebarProps) {
   const pathname = usePathname() ?? "/account";
 
   const navItems = [
@@ -52,17 +51,6 @@ export function AppSidebar({ workspaceName, activeCount = 0, isAdmin = false }: 
       <div className="p-5 space-y-5">
         <div className="px-1">
           <ParcelLogo variant="dark" href="/" />
-        </div>
-
-        {/* Workspace card */}
-        <div className="flex items-center justify-between rounded-xl border border-white/10 bg-forest-muted/80 px-3.5 py-2.5">
-          <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#9DAFA1]">
-              Workspace
-            </p>
-            <p className="truncate text-sm font-medium text-white">{workspaceName}</p>
-          </div>
-          <ChevronDown className="h-4 w-4 shrink-0 text-[#9DAFA1]" />
         </div>
 
         {/* Primary nav */}

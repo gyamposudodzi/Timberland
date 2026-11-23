@@ -40,7 +40,7 @@ export function AppTopbar({
 
   const pageLabel =
     LABELS[pathname] ??
-    (pathname.startsWith("/account/shipments/") ? "Shipment details" : "Workspace");
+    (pathname.startsWith("/account/shipments/") ? "Shipment details" : "Dashboard");
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-white/95 backdrop-blur">
@@ -55,10 +55,8 @@ export function AppTopbar({
             {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
 
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>Workspace</span>
-            <span>/</span>
-            <span className="font-medium text-forest">{pageLabel}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-forest">{pageLabel}</span>
           </div>
         </div>
 
