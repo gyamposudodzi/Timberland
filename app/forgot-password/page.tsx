@@ -21,7 +21,7 @@ export default function ForgotPasswordPage() {
             Forgot your password?
           </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            No worries. Enter the email you use for Parcel and we&apos;ll send you a secure reset link.
+            No worries. Enter the email you use for Skynet Freight and we&apos;ll send you a secure reset link.
           </p>
         </div>
 

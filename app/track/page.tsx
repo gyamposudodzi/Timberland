@@ -32,7 +32,7 @@ export default function TrackIndexPage() {
               Have an account? Manage deliveries, addresses, and notifications in your workspace.
             </p>
             <p className="text-xs text-muted-foreground">
-              Guest tracking works with any valid Parcel tracking number.
+              Guest tracking works with any valid Skynet Freight tracking number.
             </p>
           </div>
           <Link

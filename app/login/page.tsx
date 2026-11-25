@@ -21,7 +21,7 @@ export default async function LoginPage({
 
   return (
     <AuthShell
-      topPrompt="New to Parcel?"
+      topPrompt="New to Skynet Freight?"
       topLinkLabel="Create an account"
       topLinkHref="/signup"
     >
@@ -29,7 +29,7 @@ export default async function LoginPage({
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-forest">Welcome back.</h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            Sign in to your Parcel account and keep things moving.
+            Sign in to your Skynet Freight account and keep things moving.
           </p>
         </div>
 

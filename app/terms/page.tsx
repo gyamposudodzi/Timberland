@@ -4,7 +4,7 @@ import { LegalShell } from "@/components/layout/legal-shell";
 export const metadata: Metadata = { title: "Terms & conditions" };
 
 const SECTIONS = [
-  { id: "using-parcel", label: "01 Using Parcel" },
+  { id: "using-skynet-freight", label: "01 Using Skynet Freight" },
   { id: "account", label: "02 Your account & responsibilities" },
   { id: "bookings", label: "03 Bookings, quotes & payment" },
   { id: "packaging", label: "04 Packaging & restricted goods" },
@@ -27,10 +27,10 @@ export default function TermsPage() {
       footerLinkLabel="Read privacy policy"
       footerLinkHref="/privacy"
     >
-      <section id="using-parcel" className="scroll-mt-24 space-y-2.5">
-        <h2 className="text-xl font-bold text-forest">01 Using Parcel</h2>
+      <section id="using-skynet-freight" className="scroll-mt-24 space-y-2.5">
+        <h2 className="text-xl font-bold text-forest">01 Using Skynet Freight</h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
-          These terms govern your use of the Parcel website, customer workspace, and parcel and freight booking services. When you create an account or book a shipment, you agree to the terms presented at that time alongside any service-specific conditions.
+          These terms govern your use of the Skynet Freight website, customer workspace, and parcel and freight booking services. When you create an account or book a shipment, you agree to the terms presented at that time alongside any service-specific conditions.
         </p>
         <p className="text-sm leading-relaxed text-muted-foreground">
           Please review your booking details before confirming a shipment. If you are booking on behalf of a business, you confirm that you are authorized to act on its behalf.

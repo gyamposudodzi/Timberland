@@ -38,7 +38,7 @@ export function AuthShell({
         {/* Left dark green brand panel */}
         <div className="hidden rounded-2xl bg-forest p-8 text-white lg:col-span-6 lg:block">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9DAFA1]">
-            Parcel · Your shipping partner
+            Skynet Freight · Your shipping partner
           </p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight leading-tight">
             Your next chapter.
@@ -52,7 +52,7 @@ export function AuthShell({
           <div className="mt-6 overflow-hidden rounded-xl border border-white/10">
             <Image
               src="/images/hero-van.jpg"
-              alt="Parcel delivery van and courier"
+              alt="Skynet Freight delivery van and courier"
               width={640}
               height={400}
               className="h-56 w-full object-cover"

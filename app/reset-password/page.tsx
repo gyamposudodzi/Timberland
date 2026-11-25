@@ -33,7 +33,7 @@ export default async function ResetPasswordPage({
           </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
             {token
-              ? "Pick a new password for your Parcel account."
+              ? "Pick a new password for your Skynet Freight account."
               : "This reset link is missing its token."}
           </p>
         </div>

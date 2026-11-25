@@ -13,7 +13,7 @@ export function SiteFooter() {
           </div>
 
           <div className="space-y-2.5 text-sm">
-            <p className="font-semibold text-white">Ship with Parcel</p>
+            <p className="font-semibold text-white">Ship with Skynet Freight</p>
             <ul className="space-y-2 text-[#9DAFA1]">
               <li><Link href="/pricing" className="hover:text-lime transition-colors">Parcel &amp; express</Link></li>
               <li><Link href="/pricing#freight" className="hover:text-lime transition-colors">Freight solutions</Link></li>

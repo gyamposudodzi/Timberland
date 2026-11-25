@@ -20,7 +20,7 @@ interface LegalShellProps {
 }
 
 export function LegalShell({
-  eyebrow = "PARCEL / LEGAL",
+  eyebrow = "SKYNET FREIGHT / LEGAL",
   title,
   subtitle,
   meta,

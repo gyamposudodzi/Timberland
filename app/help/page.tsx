@@ -30,14 +30,14 @@ export default function HelpPage() {
       <section className="border-b border-border bg-muted/70 py-12">
         <div className="container-page max-w-4xl">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            PARCEL / SUPPORT
+            SKYNET FREIGHT / SUPPORT
           </p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-forest sm:text-4xl">
             Help center
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Answers to common questions. Need a person? Email{" "}
-            <span className="font-medium text-forest">support@parcel.example</span>.
+            <span className="font-medium text-forest">support@skynetfreight.com</span>.
           </p>
         </div>
       </section>
@@ -61,7 +61,7 @@ export default function HelpPage() {
           <div>
             <p className="text-sm font-semibold text-forest">Still need assistance?</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Have your tracking number ready and reach out to support@parcel.example.
+              Have your tracking number ready and reach out to support@skynetfreight.com.
             </p>
           </div>
           <Link

@@ -29,7 +29,7 @@ export default function PrivacyPage() {
       <section id="about" className="scroll-mt-24 space-y-2.5">
         <h2 className="text-xl font-bold text-forest">01 About this policy</h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
-          This policy explains how Parcel collects, uses, and protects personal information across our website, customer workspace, shipping services, and support channels.
+          This policy explains how Skynet Freight collects, uses, and protects personal information across our website, customer workspace, shipping services, and support channels.
         </p>
       </section>
 

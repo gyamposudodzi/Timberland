@@ -24,7 +24,7 @@ export default async function QuotePage({
       <section className="border-b border-border bg-muted/70 py-12">
         <div className="container-page max-w-5xl">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            PARCEL / INSTANT QUOTE
+            SKYNET FREIGHT / INSTANT QUOTE
           </p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-forest sm:text-4xl">
             Get a quote
